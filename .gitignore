@@ -9,6 +9,7 @@ tests/playwright/test-results/
 tests/playwright/.auth/
 
 # Root temp artifacts
+.tools/
 *.zip
 *.ipa
 *.aab
@@ -37,4 +38,3 @@ native-android/*.keystore
 *.json.secret
 .env
 .env.*
-

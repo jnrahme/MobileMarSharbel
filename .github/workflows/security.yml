@@ -60,5 +60,18 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: actions/dependency-review-action@v4
+      - name: Check dependency graph availability
+        id: dependency-graph
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh api "repos/${GITHUB_REPOSITORY}/dependency-graph/sbom" >/dev/null 2>&1; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "Dependency graph is unavailable for ${GITHUB_REPOSITORY}; skipping dependency review." >> "$GITHUB_STEP_SUMMARY"
+            echo "::notice::Dependency graph is unavailable for ${GITHUB_REPOSITORY}; skipping dependency review."
+          fi
 
+      - uses: actions/dependency-review-action@v4
+        if: steps.dependency-graph.outputs.available == 'true'

@@ -1,0 +1,6 @@
+appId: com.jnrahme.androidsaintcharbel.debug
+---
+- launchApp
+- assertVisible: "Saint Charbel"
+- assertVisible: "Read the Story"
+- assertVisible: "Pray the Rosary"

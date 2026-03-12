@@ -1,0 +1,25 @@
+name: Enforce Main Promotion Source
+
+on:
+  pull_request_target:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+
+jobs:
+  enforce:
+    name: Require develop or versioned release branch
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@v4
+        with:
+          ref: refs/pull/${{ github.event.pull_request.number }}/head
+          fetch-depth: 1
+
+      - name: Validate promotion branch
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: python3 scripts/validate_release_branch.py --repo-root . --head-ref "$HEAD_REF"
