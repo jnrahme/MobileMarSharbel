@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT_DIR"
+
+echo "==> make help"
+make help >/dev/null
+
+echo "==> make verify-repo"
+make verify-repo
+
+echo "==> make hygiene-check"
+make hygiene-check
+
+echo "==> make preflight-release"
+make preflight-release
+
+echo "==> make print-blockers"
+make print-blockers >/dev/null
+
+echo "==> make docs-site"
+make docs-site >/dev/null
+
+echo "==> launcher command help"
+bash scripts/run-ios-sim.sh --help >/dev/null
+bash scripts/run-android-target.sh --help >/dev/null
+bash scripts/maestro-smoke.sh --help >/dev/null
+
+echo "==> gitleaks bootstrap"
+bash scripts/ensure-gitleaks.sh >/dev/null
+
+echo "CLI smoke checks passed"

@@ -1,0 +1,6 @@
+appId: com.rammyinn.saintcharbel
+---
+- launchApp
+- assertVisible: "Saint Charbel"
+- assertVisible: "Read the Story"
+- assertVisible: "Pray the Rosary"

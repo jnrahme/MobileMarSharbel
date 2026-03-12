@@ -28,6 +28,18 @@ jobs:
       - name: Verify repo contract
         run: make verify-repo
 
+  cli-surface:
+    name: CLI Surface
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Make root scripts executable
+        run: chmod +x scripts/*.sh scripts/pre-commit
+
+      - name: Run CLI smoke checks
+        run: make cli-smoke
+
   playwright-local:
     name: Playwright Local Checks
     runs-on: ubuntu-latest
@@ -68,6 +80,9 @@ jobs:
       - name: Make scripts executable
         run: chmod +x scripts/*.sh native-ios/scripts/healthcheck.sh
 
+      - name: Run release preflight
+        run: make preflight-release-ios
+
       - name: Show Xcode version
         run: xcodebuild -version
 
@@ -96,6 +111,9 @@ jobs:
       - name: Make scripts executable
         run: chmod +x scripts/*.sh native-android/gradlew native-android/scripts/healthcheck.sh
 
+      - name: Run release preflight
+        run: make preflight-release-android
+
       - name: Run Android verification
         run: SKIP_REMOTE_CHECKS=1 make verify-android
 
@@ -108,4 +126,3 @@ jobs:
             native-android/app/build/outputs/apk/debug/app-debug.apk
             native-android/app/build/outputs/bundle/release/
           if-no-files-found: ignore
-

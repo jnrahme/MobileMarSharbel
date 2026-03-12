@@ -5,6 +5,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 required_dirs=(
   ".github/workflows"
+  ".maestro"
   ".trunk"
   "docs"
   "docs/plans"
@@ -21,11 +22,21 @@ required_files=(
   "Makefile"
   "README.md"
   "docs/index.html"
+  "docs/release-automation.md"
   "docs/random-timer-automation-playbook.html"
   "docs/plans/2026-03-12-mobile-automation-roadmap.md"
   "docs/user-intervention-todo.md"
+  ".maestro/ios-smoke.yaml"
+  ".maestro/android-smoke.yaml"
   "scripts/check-repo-contract.sh"
+  "scripts/cli-smoke-test.sh"
+  "scripts/ensure-gitleaks.sh"
+  "scripts/hygiene-check.sh"
   "scripts/install-hooks.sh"
+  "scripts/maestro-smoke.sh"
+  "scripts/preflight-release.sh"
+  "scripts/run-android-target.sh"
+  "scripts/run-ios-sim.sh"
   "scripts/pre-commit"
   "scripts/verify-ios.sh"
   "scripts/verify-android.sh"
@@ -70,6 +81,25 @@ for rel in \
   "native-android/gradlew"; do
   if [[ ! -f "$ROOT_DIR/$rel" ]]; then
     echo "❌ Missing nested app file: $rel" >&2
+    errors=$((errors + 1))
+  fi
+done
+
+echo "==> Checking root automation scripts parse"
+for rel in \
+  "scripts/check-repo-contract.sh" \
+  "scripts/cli-smoke-test.sh" \
+  "scripts/ensure-gitleaks.sh" \
+  "scripts/hygiene-check.sh" \
+  "scripts/install-hooks.sh" \
+  "scripts/maestro-smoke.sh" \
+  "scripts/preflight-release.sh" \
+  "scripts/run-android-target.sh" \
+  "scripts/run-ios-sim.sh" \
+  "scripts/verify-ios.sh" \
+  "scripts/verify-android.sh"; do
+  if ! bash -n "$ROOT_DIR/$rel"; then
+    echo "❌ Shell parse failed: $rel" >&2
     errors=$((errors + 1))
   fi
 done

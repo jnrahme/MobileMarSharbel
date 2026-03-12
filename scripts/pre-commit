@@ -28,9 +28,10 @@ done
 
 if command -v gitleaks >/dev/null 2>&1; then
   gitleaks git --pre-commit --staged --no-banner
+elif [[ -x "$ROOT_DIR/.tools/bin/gitleaks" ]]; then
+  "$ROOT_DIR/.tools/bin/gitleaks" git --pre-commit --staged --no-banner
 else
   echo "gitleaks not installed; skipping secret scan"
 fi
 
 echo "Root pre-commit checks passed"
-

@@ -36,6 +36,9 @@ jobs:
       - name: Make scripts executable
         run: chmod +x scripts/*.sh native-ios/scripts/healthcheck.sh
 
+      - name: Run iOS release preflight
+        run: bash scripts/preflight-release.sh --platform ios --layer 1
+
       - name: Show Xcode version
         run: xcodebuild -version
 
@@ -83,6 +86,9 @@ jobs:
       - name: Make scripts executable
         run: chmod +x scripts/*.sh native-android/gradlew native-android/scripts/healthcheck.sh
 
+      - name: Run Android release preflight
+        run: bash scripts/preflight-release.sh --platform android --layer 1
+
       - name: Run Android release-readiness build
         run: SKIP_REMOTE_CHECKS=1 make verify-android
 
@@ -99,4 +105,3 @@ jobs:
           name: android-release-aab
           path: native-android/app/build/outputs/bundle/release/*.aab
           if-no-files-found: error
-
