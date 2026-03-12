@@ -20,6 +20,7 @@ npm ci
 
 ```bash
 npm run verify
+npm run verify:strict
 ```
 
 ## Current scope
@@ -29,3 +30,8 @@ npm run verify
 - docs site files exist
 - playbook contains the major roadmap sections
 
+Strict mode additionally checks the release-readiness quick wins:
+
+- store-access checker plumbing
+- main-promotion workflow enforcement
+- strict CI wiring for local contract checks

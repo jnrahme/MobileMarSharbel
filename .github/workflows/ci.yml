@@ -58,7 +58,7 @@ jobs:
         run: npm ci
 
       - name: Run local contract checks
-        run: npm run verify
+        run: npm run verify:strict
 
       - name: Upload Playwright artifacts
         if: always()

@@ -29,6 +29,7 @@ required_files=(
   ".maestro/ios-smoke.yaml"
   ".maestro/android-smoke.yaml"
   "scripts/check-repo-contract.sh"
+  "scripts/check_store_access.py"
   "scripts/cli-smoke-test.sh"
   "scripts/ensure-gitleaks.sh"
   "scripts/hygiene-check.sh"
@@ -38,6 +39,7 @@ required_files=(
   "scripts/run-android-target.sh"
   "scripts/run-ios-sim.sh"
   "scripts/pre-commit"
+  "scripts/validate_release_branch.py"
   "scripts/verify-ios.sh"
   "scripts/verify-android.sh"
   "tests/playwright/package.json"
@@ -49,6 +51,7 @@ required_files=(
   ".github/workflows/native-release.yml"
   ".github/workflows/remote-health.yml"
   ".github/workflows/docs-site.yml"
+  ".github/workflows/enforce-develop-to-main.yml"
   ".github/pull_request_template.md"
   ".github/ISSUE_TEMPLATE/bug_report.md"
   ".github/ISSUE_TEMPLATE/feature_request.md"
@@ -100,6 +103,16 @@ for rel in \
   "scripts/verify-android.sh"; do
   if ! bash -n "$ROOT_DIR/$rel"; then
     echo "❌ Shell parse failed: $rel" >&2
+    errors=$((errors + 1))
+  fi
+done
+
+echo "==> Checking Python automation scripts parse"
+for rel in \
+  "scripts/check_store_access.py" \
+  "scripts/validate_release_branch.py"; do
+  if ! python3 -m py_compile "$ROOT_DIR/$rel"; then
+    echo "❌ Python parse failed: $rel" >&2
     errors=$((errors + 1))
   fi
 done

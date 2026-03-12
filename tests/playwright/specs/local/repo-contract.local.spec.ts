@@ -26,7 +26,8 @@ test("root contract files exist", () => {
     ".github/workflows/security.yml",
     ".github/workflows/native-release.yml",
     ".github/workflows/remote-health.yml",
-    ".github/workflows/docs-site.yml"
+    ".github/workflows/docs-site.yml",
+    ".github/workflows/enforce-develop-to-main.yml"
   ];
 
   for (const relPath of required) {
@@ -50,6 +51,7 @@ test("ci workflow covers repo, ios, android, and playwright lanes", () => {
   expect(workflow).toContain("Repo Contract");
   expect(workflow).toContain("CLI Surface");
   expect(workflow).toContain("Playwright Local Checks");
+  expect(workflow).toContain("verify:strict");
   expect(workflow).toContain("iOS Health Check");
   expect(workflow).toContain("Android Health Check");
 });

@@ -12,6 +12,7 @@ The target state is a single repo that behaves more like Igor Ganapolsky's `Rand
 - release-readiness and artifact workflows
 - simulator / emulator launch commands from the repo root
 - Maestro smoke scaffolding for installed native builds
+- store-access and main-promotion guardrails
 - docs that explain what is automated and what is still blocked on credentials or store access
 
 ## Current structure
@@ -43,6 +44,7 @@ make verify-repo
 make verify
 make verify-full
 make preflight-release
+make store-access-check
 make run-ios-sim
 make run-android-emulator
 make maestro-ios
@@ -61,6 +63,8 @@ make install-hooks
 - iOS simulator build/install/launch
 - Android emulator/device build/install/launch
 - release preflight checks modeled after Random-Timer
+- read-only store credential check plumbing for App Store Connect and Google Play
+- main-promotion workflow that enforces `develop` or versioned release branches into `main`
 - Maestro smoke flow scaffolding for installed apps
 - Playwright local checks for repo structure
 - root CI and security workflow scaffolding

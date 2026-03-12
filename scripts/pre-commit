@@ -23,6 +23,9 @@ for rel in "${staged_files[@]}"; do
     *.yml|*.yaml)
       ruby -e 'require "psych"; Psych.parse_stream(File.read(ARGV[0]))' "$file"
       ;;
+    *.py)
+      python3 -m py_compile "$file"
+      ;;
   esac
 done
 

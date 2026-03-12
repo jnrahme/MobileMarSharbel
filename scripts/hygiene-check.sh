@@ -44,7 +44,7 @@ done
 
 echo "2. No absolute workstation paths in tracked files"
 if git -C "$ROOT_DIR" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-  abs_hits="$(git -C "$ROOT_DIR" grep -l '/Users/\|/home/\|C:\\Users\\' -- '*.md' '*.sh' '*.yml' '*.yaml' '*.json' '*.toml' '*.kt' '*.swift' ':!docs/random-timer-automation-playbook.html' 2>/dev/null || true)"
+  abs_hits="$(git -C "$ROOT_DIR" grep -l '/Users/\|/home/\|C:\\Users\\' -- '*.md' '*.sh' '*.yml' '*.yaml' '*.json' '*.toml' '*.kt' '*.swift' ':!docs/random-timer-automation-playbook.html' ':!scripts/hygiene-check.sh' 2>/dev/null || true)"
   if [[ -n "$abs_hits" ]]; then
     while IFS= read -r hit; do
       [[ -n "$hit" ]] || continue

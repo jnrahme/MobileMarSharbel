@@ -4,7 +4,9 @@
   "type": "module",
   "scripts": {
     "test:local": "playwright test specs/local --project=local-checks",
+    "test:local:strict": "STRICT_STORE_READINESS=1 playwright test specs/local --project=local-checks",
     "verify": "npm run test:local",
+    "verify:strict": "npm run test:local:strict",
     "install:browsers": "playwright install --with-deps chromium"
   },
   "devDependencies": {
@@ -12,4 +14,3 @@
     "typescript": "^5.9.3"
   }
 }
-

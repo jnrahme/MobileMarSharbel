@@ -2,10 +2,10 @@
 
 .PHONY: help
 .PHONY: verify verify-full verify-repo verify-ios verify-ios-full verify-android verify-android-full verify-playwright
-.PHONY: preflight-release preflight-release-ios preflight-release-android hygiene-check cli-smoke
+.PHONY: preflight-release preflight-release-ios preflight-release-android hygiene-check cli-smoke store-access-check
 .PHONY: run-ios-sim run-android-emulator run-android-device maestro-ios maestro-android
 .PHONY: remote-health remote-health-ios remote-health-android
-.PHONY: playwright-install playwright-verify-local install-hooks gitleaks-install security-gitleaks print-blockers docs-site
+.PHONY: playwright-install playwright-verify-local playwright-verify-strict install-hooks gitleaks-install security-gitleaks print-blockers docs-site
 
 IOS_DIR := native-ios
 ANDROID_DIR := native-android
@@ -18,6 +18,7 @@ help:
 		'  make verify                 Run repo + iOS + Android verification' \
 		'  make verify-full            Run verification, CLI smoke checks, and Playwright local checks' \
 		'  make preflight-release      Run Random-Timer-style release readiness checks (layer 1)' \
+		'  make store-access-check    Validate configured App Store / Play API credentials' \
 		'  make hygiene-check          Run repo hygiene checks' \
 		'  make cli-smoke             Validate the root command surface' \
 		'  make run-ios-sim           Build, install, and launch the iOS app on a simulator' \
@@ -25,13 +26,14 @@ help:
 		'  make run-android-device    Build, install, and launch Android on a connected device' \
 		'  make maestro-ios           Run the iOS Maestro smoke flow' \
 		'  make maestro-android       Run the Android Maestro smoke flow' \
+		'  make playwright-verify-strict Run the strict local Playwright release-readiness checks' \
 		'  make remote-health         Run full remote dependency checks on both native apps' \
 		'  make security-gitleaks     Install gitleaks if needed and run a repo secret scan' \
 		'  make print-blockers        Print the manual follow-up checklist'
 
 verify: verify-repo verify-ios verify-android
 
-verify-full: verify cli-smoke verify-playwright
+verify-full: verify cli-smoke playwright-verify-strict
 
 verify-repo:
 	@bash scripts/check-repo-contract.sh
@@ -59,6 +61,9 @@ preflight-release-ios:
 
 preflight-release-android:
 	@bash scripts/preflight-release.sh --platform android --layer 1
+
+store-access-check:
+	@python3 scripts/check_store_access.py --platform both
 
 cli-smoke:
 	@bash scripts/cli-smoke-test.sh
@@ -91,6 +96,9 @@ playwright-install:
 
 verify-playwright:
 	@cd $(PLAYWRIGHT_DIR) && npm ci && npm run verify
+
+playwright-verify-strict:
+	@cd $(PLAYWRIGHT_DIR) && npm ci && npm run verify:strict
 
 playwright-verify-local: verify-playwright
 
