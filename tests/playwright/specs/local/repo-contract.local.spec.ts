@@ -50,10 +50,11 @@ test("ci workflow covers repo, ios, android, and playwright lanes", () => {
   expect(workflow).toContain("Android Health Check");
 });
 
-test("user intervention todo lists secrets and nested git decision", () => {
+test("user intervention todo lists secrets and repo settings follow-up", () => {
   const todo = read("docs/user-intervention-todo.md");
 
-  expect(todo).toContain("nested `.git` directories");
+  expect(todo).toContain("Branch protection");
+  expect(todo).toContain("GitHub Pages");
   expect(todo).toContain("APPSTORE_PRIVATE_KEY");
   expect(todo).toContain("GOOGLE_PLAY_JSON_KEY");
 });

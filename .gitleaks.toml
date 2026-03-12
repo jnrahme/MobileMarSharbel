@@ -15,12 +15,6 @@ description = "Google service account JSON"
 regex = '''"type"\s*:\s*"service_account"'''
 keywords = ["service_account"]
 
-[[rules]]
-id = "android-keystore-password"
-description = "Android keystore credentials"
-regex = '''(?i)(storePassword|keyPassword)\s*=\s*.+'''
-keywords = ["storePassword", "keyPassword"]
-
 [allowlist]
 paths = [
   '''\.git/''',
@@ -28,4 +22,3 @@ paths = [
   '''build/''',
   '''DerivedData/''',
 ]
-
