@@ -1,0 +1,22 @@
+appId: com.rammyinn.saintcharbel
+---
+- launchApp:
+    clearState: true
+- assertVisible: "Saint Charbel"
+- takeScreenshot: home
+
+- tapOn: "Story"
+- assertVisible: "Choose a saint story and read it like a real book."
+- takeScreenshot: story-library
+
+- tapOn: "The Story of Saint Charbel"
+- assertVisible: "Read to Me"
+- takeScreenshot: story-reader
+
+- tapOn: "Rosary"
+- assertVisible: "A calm guided path for daily Rosary prayer."
+- takeScreenshot: rosary-hub
+
+- tapOn: "Start with today's set"
+- assertVisible: "Mystery 1"
+- takeScreenshot: rosary-set
