@@ -1,0 +1,119 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version, for example 1.0.0"
+        required: true
+        type: string
+      prerelease:
+        description: "Mark this GitHub release as a prerelease"
+        required: true
+        default: false
+        type: boolean
+      release_notes:
+        description: "Optional release notes override"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  build-and-release:
+    name: Build And Release
+    runs-on: macos-latest
+    env:
+      PROJECT: SaintCharbelApp.xcodeproj
+      SCHEME: SaintCharbelApp
+      CONFIGURATION: Release
+
+    steps:
+      - name: Check Out Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Show Xcode Version
+        run: xcodebuild -version
+
+      - name: Run Health Check
+        run: ./scripts/healthcheck.sh
+
+      - name: Archive Source Snapshot
+        run: git archive --format=zip --output "SaintCharbelApp-${{ inputs.version }}.zip" HEAD
+
+      - name: Upload Release Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SaintCharbelApp-${{ inputs.version }}
+          path: SaintCharbelApp-${{ inputs.version }}.zip
+
+      - name: Create GitHub Release
+        uses: actions/github-script@v8
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+          RELEASE_NOTES: ${{ inputs.release_notes }}
+          PRERELEASE: ${{ inputs.prerelease }}
+        with:
+          script: |
+            const version = process.env.RELEASE_VERSION.trim();
+            const tag = `v${version}`;
+            const prerelease = process.env.PRERELEASE === "true";
+            const releaseNotes = (process.env.RELEASE_NOTES || "").trim();
+            const { owner, repo } = context.repo;
+
+            try {
+              await github.rest.git.getRef({
+                owner,
+                repo,
+                ref: `tags/${tag}`,
+              });
+              core.info(`Tag ${tag} already exists.`);
+            } catch (error) {
+              if (error.status !== 404) {
+                throw error;
+              }
+
+              await github.rest.git.createRef({
+                owner,
+                repo,
+                ref: `refs/tags/${tag}`,
+                sha: context.sha,
+              });
+              core.info(`Created tag ${tag} at ${context.sha}.`);
+            }
+
+            try {
+              const existing = await github.rest.repos.getReleaseByTag({
+                owner,
+                repo,
+                tag,
+              });
+
+              core.info(`Release ${tag} already exists with id ${existing.data.id}.`);
+              return;
+            } catch (error) {
+              if (error.status !== 404) {
+                throw error;
+              }
+            }
+
+            const release = await github.rest.repos.createRelease({
+              owner,
+              repo,
+              tag_name: tag,
+              target_commitish: context.sha,
+              name: tag,
+              body: releaseNotes || undefined,
+              draft: false,
+              prerelease,
+              generate_release_notes: releaseNotes.length === 0,
+            });
+
+            core.info(`Created release ${release.data.html_url}`);

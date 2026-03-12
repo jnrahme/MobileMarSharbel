@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+if ! git -C "$ROOT_DIR" rev-parse --git-dir >/dev/null 2>&1; then
+  echo "Not inside a root git repo. Skipping staged-file hook checks."
+  exit 0
+fi
+
+bash "$ROOT_DIR/scripts/check-repo-contract.sh"
+
+mapfile -t staged_files < <(git -C "$ROOT_DIR" diff --cached --name-only --diff-filter=ACM)
+
+for rel in "${staged_files[@]}"; do
+  file="$ROOT_DIR/$rel"
+  [[ -f "$file" ]] || continue
+
+  case "$rel" in
+    *.sh)
+      bash -n "$file"
+      ;;
+    *.yml|*.yaml)
+      ruby -e 'require "psych"; Psych.parse_stream(File.read(ARGV[0]))' "$file"
+      ;;
+  esac
+done
+
+if command -v gitleaks >/dev/null 2>&1; then
+  gitleaks git --pre-commit --staged --no-banner
+else
+  echo "gitleaks not installed; skipping secret scan"
+fi
+
+echo "Root pre-commit checks passed"
+

@@ -1,0 +1,1619 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Random Timer Automation Playbook</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+    <style>
+      :root {
+        --bg: #f5f1e8;
+        --bg-soft: rgba(255, 255, 255, 0.74);
+        --surface: rgba(255, 255, 255, 0.82);
+        --surface-strong: rgba(255, 255, 255, 0.95);
+        --line: rgba(22, 35, 54, 0.12);
+        --ink: #162336;
+        --muted: #5c6877;
+        --navy: #18324f;
+        --navy-2: #234a73;
+        --gold: #c67f32;
+        --gold-soft: #f1d7b2;
+        --mint: #2d8f7c;
+        --mint-soft: #d9f3eb;
+        --rose: #9b4b55;
+        --rose-soft: #f9dde2;
+        --shadow-lg: 0 30px 80px rgba(22, 35, 54, 0.12);
+        --shadow-md: 0 18px 42px rgba(22, 35, 54, 0.1);
+        --radius-xl: 28px;
+        --radius-lg: 22px;
+        --radius-md: 16px;
+        --shell: min(1180px, calc(100vw - 40px));
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Manrope", "Avenir Next", "Segoe UI", sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at top left, rgba(198, 127, 50, 0.18), transparent 24%),
+          radial-gradient(circle at top right, rgba(45, 143, 124, 0.18), transparent 26%),
+          linear-gradient(180deg, #f9f6ef 0%, var(--bg) 42%, #efe7dc 100%);
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background-image:
+          linear-gradient(rgba(255, 255, 255, 0.24) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.24) 1px, transparent 1px);
+        background-size: 56px 56px;
+        mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.32), transparent 78%);
+        opacity: 0.38;
+      }
+
+      a {
+        color: var(--navy-2);
+        text-decoration: none;
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+
+      .shell {
+        width: var(--shell);
+        margin: 0 auto;
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        backdrop-filter: blur(18px);
+        background: rgba(249, 246, 239, 0.84);
+        border-bottom: 1px solid rgba(22, 35, 54, 0.08);
+      }
+
+      .topbar-inner {
+        width: var(--shell);
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 14px 0;
+      }
+
+      .wordmark {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+      }
+
+      .wordmark-mark {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--gold), var(--navy-2));
+        box-shadow: 0 0 0 8px rgba(198, 127, 50, 0.12);
+      }
+
+      .nav-links {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 10px;
+      }
+
+      .nav-links a {
+        padding: 10px 14px;
+        border-radius: 999px;
+        color: var(--muted);
+        font-size: 0.92rem;
+        background: rgba(255, 255, 255, 0.52);
+        border: 1px solid rgba(22, 35, 54, 0.08);
+      }
+
+      .nav-links a:hover {
+        text-decoration: none;
+        color: var(--ink);
+        background: rgba(255, 255, 255, 0.92);
+      }
+
+      .hero {
+        padding: 52px 0 34px;
+      }
+
+      .hero-grid {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 28px;
+        align-items: stretch;
+      }
+
+      .hero-copy,
+      .hero-meta {
+        position: relative;
+        overflow: hidden;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.72));
+        border: 1px solid rgba(22, 35, 54, 0.08);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-lg);
+      }
+
+      .hero-copy {
+        padding: 34px 34px 30px;
+      }
+
+      .hero-copy::after {
+        content: "";
+        position: absolute;
+        right: -90px;
+        top: -90px;
+        width: 220px;
+        height: 220px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(198, 127, 50, 0.22), transparent 68%);
+      }
+
+      .hero-meta {
+        padding: 28px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(24, 50, 79, 0.08);
+        color: var(--navy);
+        font-size: 0.82rem;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 18px 0 14px;
+        font-size: clamp(2.5rem, 6vw, 4.7rem);
+        line-height: 0.96;
+        letter-spacing: -0.05em;
+      }
+
+      .lead {
+        max-width: 62ch;
+        margin: 0;
+        font-size: 1.08rem;
+        line-height: 1.78;
+        color: var(--muted);
+      }
+
+      .hero-callout {
+        margin-top: 24px;
+        padding: 18px 18px 18px 20px;
+        border-left: 4px solid var(--gold);
+        border-radius: 0 18px 18px 0;
+        background: linear-gradient(90deg, rgba(241, 215, 178, 0.52), rgba(255, 255, 255, 0.6));
+      }
+
+      .hero-callout strong {
+        display: block;
+        margin-bottom: 6px;
+      }
+
+      .meta-title {
+        margin: 0;
+        font-size: 1.05rem;
+        font-weight: 800;
+      }
+
+      .meta-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .meta-item {
+        padding: 14px 16px;
+        border-radius: var(--radius-md);
+        background: rgba(24, 50, 79, 0.04);
+        border: 1px solid rgba(24, 50, 79, 0.08);
+      }
+
+      .meta-item span {
+        display: block;
+        margin-bottom: 7px;
+        font-size: 0.74rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+        font-weight: 700;
+      }
+
+      .meta-item strong {
+        font-size: 0.98rem;
+        line-height: 1.5;
+      }
+
+      .meta-note {
+        margin: 0;
+        padding: 14px 16px;
+        border-radius: var(--radius-md);
+        background: rgba(155, 75, 85, 0.08);
+        color: #5a2d33;
+        border: 1px solid rgba(155, 75, 85, 0.14);
+        line-height: 1.65;
+      }
+
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 16px;
+        margin: 22px 0 10px;
+      }
+
+      .metric {
+        padding: 18px;
+        border-radius: var(--radius-lg);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.64));
+        border: 1px solid rgba(22, 35, 54, 0.08);
+        box-shadow: var(--shadow-md);
+      }
+
+      .metric-value {
+        margin: 0;
+        font-size: clamp(2rem, 4vw, 2.7rem);
+        line-height: 1;
+        letter-spacing: -0.05em;
+      }
+
+      .metric-label {
+        margin: 10px 0 0;
+        color: var(--muted);
+        line-height: 1.6;
+        font-size: 0.95rem;
+      }
+
+      .section {
+        padding: 26px 0;
+      }
+
+      .section-head {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 18px;
+        margin-bottom: 18px;
+      }
+
+      .section-kicker {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--navy-2);
+        font-size: 0.78rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        font-weight: 800;
+      }
+
+      h2 {
+        margin: 0;
+        font-size: clamp(1.8rem, 4vw, 3rem);
+        line-height: 1.04;
+        letter-spacing: -0.04em;
+      }
+
+      .section-head p,
+      .section-intro {
+        margin: 0;
+        max-width: 62ch;
+        line-height: 1.76;
+        color: var(--muted);
+      }
+
+      .summary-grid,
+      .atlas-grid,
+      .adoption-grid,
+      .source-grid,
+      .ops-grid {
+        display: grid;
+        gap: 16px;
+      }
+
+      .summary-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .atlas-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .ops-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .adoption-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .source-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .execution-strip,
+      .command-band {
+        display: grid;
+        gap: 16px;
+      }
+
+      .execution-strip {
+        grid-template-columns: 1.15fr 0.92fr 0.92fr;
+      }
+
+      .execution-card {
+        position: relative;
+        overflow: hidden;
+        padding: 24px;
+        border-radius: var(--radius-lg);
+        border: 1px solid rgba(22, 35, 54, 0.08);
+        box-shadow: var(--shadow-md);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.74));
+      }
+
+      .execution-card::after {
+        content: "";
+        position: absolute;
+        right: -42px;
+        top: -42px;
+        width: 140px;
+        height: 140px;
+        border-radius: 50%;
+        opacity: 0.42;
+      }
+
+      .execution-card--ready {
+        background: linear-gradient(180deg, rgba(217, 243, 235, 0.94), rgba(255, 255, 255, 0.78));
+      }
+
+      .execution-card--ready::after {
+        background: radial-gradient(circle, rgba(45, 143, 124, 0.34), transparent 68%);
+      }
+
+      .execution-card--blocked {
+        background: linear-gradient(180deg, rgba(249, 221, 226, 0.92), rgba(255, 255, 255, 0.78));
+      }
+
+      .execution-card--blocked::after {
+        background: radial-gradient(circle, rgba(155, 75, 85, 0.3), transparent 68%);
+      }
+
+      .execution-card--later {
+        background: linear-gradient(180deg, rgba(241, 215, 178, 0.94), rgba(255, 255, 255, 0.78));
+      }
+
+      .execution-card--later::after {
+        background: radial-gradient(circle, rgba(198, 127, 50, 0.32), transparent 68%);
+      }
+
+      .execution-card h3 {
+        margin: 0 0 10px;
+        font-size: 1.26rem;
+      }
+
+      .execution-card p,
+      .execution-card li {
+        position: relative;
+        z-index: 1;
+        line-height: 1.72;
+      }
+
+      .execution-card ul {
+        margin: 14px 0 0;
+        padding-left: 20px;
+      }
+
+      .execution-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+        padding: 8px 11px;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        background: rgba(255, 255, 255, 0.72);
+      }
+
+      .command-band {
+        margin-top: 18px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .band-card {
+        padding: 18px 20px;
+        border-radius: var(--radius-md);
+        background: rgba(24, 50, 79, 0.94);
+        color: rgba(255, 255, 255, 0.9);
+        box-shadow: var(--shadow-md);
+      }
+
+      .band-card span {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 0.76rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.56);
+        font-weight: 800;
+      }
+
+      .band-card strong {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 1.06rem;
+      }
+
+      .band-card p {
+        margin: 0;
+        line-height: 1.68;
+        color: rgba(255, 255, 255, 0.8);
+      }
+
+      .panel {
+        padding: 24px;
+        border-radius: var(--radius-lg);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.72));
+        border: 1px solid rgba(22, 35, 54, 0.08);
+        box-shadow: var(--shadow-md);
+      }
+
+      .panel h3 {
+        margin: 0 0 10px;
+        font-size: 1.22rem;
+        line-height: 1.2;
+      }
+
+      .panel p,
+      .panel li {
+        color: var(--muted);
+        line-height: 1.72;
+      }
+
+      .panel ul,
+      .panel ol {
+        margin: 12px 0 0;
+        padding-left: 20px;
+      }
+
+      .lane-title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 10px;
+      }
+
+      .lane-dot {
+        flex: 0 0 auto;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+      }
+
+      .lane-ci { background: linear-gradient(135deg, #264f7d, #78abc8); }
+      .lane-release { background: linear-gradient(135deg, #c67f32, #f2c382); }
+      .lane-test { background: linear-gradient(135deg, #2d8f7c, #85d4c7); }
+      .lane-security { background: linear-gradient(135deg, #9b4b55, #e78e9a); }
+      .lane-store { background: linear-gradient(135deg, #6b5c95, #b7a6dd); }
+      .lane-growth { background: linear-gradient(135deg, #246b53, #8fd8bb); }
+      .lane-ai { background: linear-gradient(135deg, #3f4766, #8d99c4); }
+
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 14px;
+      }
+
+      .chip {
+        padding: 8px 10px;
+        border-radius: 999px;
+        background: rgba(24, 50, 79, 0.07);
+        color: var(--navy);
+        font-size: 0.82rem;
+        font-weight: 700;
+      }
+
+      .critical-note {
+        padding: 22px 24px;
+        border-radius: var(--radius-lg);
+        border: 1px solid rgba(155, 75, 85, 0.16);
+        background: linear-gradient(180deg, rgba(249, 221, 226, 0.82), rgba(255, 255, 255, 0.78));
+        box-shadow: var(--shadow-md);
+      }
+
+      .critical-note h3 {
+        margin: 0 0 12px;
+        font-size: 1.16rem;
+      }
+
+      .critical-note p,
+      .critical-note li {
+        color: #60343a;
+      }
+
+      .matrix {
+        width: 100%;
+        border-collapse: collapse;
+        overflow: hidden;
+        border-radius: var(--radius-lg);
+        background: rgba(255, 255, 255, 0.86);
+        box-shadow: var(--shadow-md);
+      }
+
+      .matrix thead {
+        background: rgba(24, 50, 79, 0.07);
+      }
+
+      .matrix th,
+      .matrix td {
+        padding: 16px 18px;
+        text-align: left;
+        vertical-align: top;
+        border-bottom: 1px solid rgba(22, 35, 54, 0.08);
+        line-height: 1.62;
+      }
+
+      .matrix th {
+        font-size: 0.82rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+      }
+
+      .code {
+        font-family: "IBM Plex Mono", "SFMono-Regular", ui-monospace, monospace;
+        font-size: 0.88rem;
+      }
+
+      .pipeline-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+      }
+
+      .pipeline {
+        padding: 24px;
+        border-radius: var(--radius-lg);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.72));
+        border: 1px solid rgba(22, 35, 54, 0.08);
+        box-shadow: var(--shadow-md);
+      }
+
+      .pipeline h3 {
+        margin: 0 0 14px;
+        font-size: 1.32rem;
+      }
+
+      .steps {
+        display: grid;
+        gap: 14px;
+      }
+
+      .step {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 14px;
+        align-items: start;
+      }
+
+      .step-index {
+        width: 36px;
+        height: 36px;
+        border-radius: 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        color: white;
+        background: linear-gradient(135deg, var(--navy-2), var(--gold));
+        box-shadow: 0 10px 18px rgba(24, 50, 79, 0.18);
+      }
+
+      .step strong {
+        display: block;
+        margin-bottom: 5px;
+      }
+
+      .timeline-note {
+        margin-top: 18px;
+        padding-top: 16px;
+        border-top: 1px dashed rgba(22, 35, 54, 0.16);
+        color: var(--muted);
+      }
+
+      .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 11px;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        font-weight: 800;
+      }
+
+      .status-copy {
+        background: rgba(45, 143, 124, 0.12);
+        color: #1f6657;
+      }
+
+      .status-adapt {
+        background: rgba(198, 127, 50, 0.14);
+        color: #8a551d;
+      }
+
+      .status-skip {
+        background: rgba(155, 75, 85, 0.12);
+        color: #7f3d46;
+      }
+
+      .source-card {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .source-card small {
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-weight: 800;
+      }
+
+      footer {
+        padding: 24px 0 50px;
+        color: var(--muted);
+      }
+
+      .fade-up {
+        opacity: 0;
+        transform: translateY(18px);
+        animation: fadeUp 0.8s ease forwards;
+      }
+
+      .fade-up:nth-child(2) { animation-delay: 0.06s; }
+      .fade-up:nth-child(3) { animation-delay: 0.12s; }
+      .fade-up:nth-child(4) { animation-delay: 0.18s; }
+      .fade-up:nth-child(5) { animation-delay: 0.24s; }
+      .fade-up:nth-child(6) { animation-delay: 0.3s; }
+
+      @keyframes fadeUp {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @media (max-width: 1080px) {
+        .hero-grid,
+        .summary-grid,
+        .atlas-grid,
+        .pipeline-grid,
+        .ops-grid,
+        .adoption-grid,
+        .source-grid,
+        .execution-strip,
+        .command-band,
+        .metrics {
+          grid-template-columns: 1fr;
+        }
+
+        .section-head {
+          align-items: start;
+          flex-direction: column;
+        }
+      }
+
+      @media (max-width: 720px) {
+        .topbar-inner {
+          align-items: start;
+          flex-direction: column;
+        }
+
+        .nav-links {
+          justify-content: flex-start;
+        }
+
+        .hero-copy,
+        .hero-meta,
+        .panel,
+        .pipeline,
+        .critical-note {
+          padding: 20px;
+        }
+
+        .meta-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .matrix {
+          display: block;
+          overflow-x: auto;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+
+        .fade-up {
+          opacity: 1;
+          transform: none;
+          animation: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="topbar">
+      <div class="topbar-inner">
+        <div class="wordmark">
+          <span class="wordmark-mark"></span>
+          <span>Random Timer Automation Playbook</span>
+        </div>
+        <nav class="nav-links" aria-label="Sections">
+          <a href="#roadmap">Roadmap</a>
+          <a href="#atlas">Atlas</a>
+          <a href="#drift">Truth vs Drift</a>
+          <a href="#pipelines">Pipelines</a>
+          <a href="#testing">Testing</a>
+          <a href="#security">Security</a>
+          <a href="#adoption">Adoption Plan</a>
+          <a href="#sources">Sources</a>
+        </nav>
+      </div>
+    </div>
+
+    <header class="hero">
+      <div class="shell">
+        <div class="hero-grid">
+          <section class="hero-copy fade-up">
+            <span class="eyebrow">Repo Analysis / March 12, 2026</span>
+            <h1>What Igor Ganapolsky's repo is actually automating</h1>
+            <p class="lead">
+              The <a href="https://github.com/IgorGanapolsky/Random-Timer" target="_blank" rel="noreferrer">Random-Timer</a>
+              repository is not just a mobile app repository. It behaves more like a compact release platform:
+              native builds, store metadata sync, browser-level console verification, device automation, security
+              scanning, growth reporting, and AI-assisted repo operations all live in one system.
+            </p>
+            <div class="hero-callout">
+              <strong>Plain-English takeaway</strong>
+              The best part to copy is the layered operating model: one canonical <span class="code">Makefile</span>, one strong CI pipeline,
+              one release gate, one store-verification layer, and one separate bucket for growth experiments. The part
+              to avoid copying blindly is the legacy drift. Some files still describe an older Expo/React Native world
+              that no longer matches the actual native iOS and Android setup.
+            </div>
+          </section>
+
+          <aside class="hero-meta fade-up">
+            <h2 class="meta-title">Analysis snapshot</h2>
+            <div class="meta-grid">
+              <div class="meta-item">
+                <span>Branch analyzed</span>
+                <strong class="code">develop</strong>
+              </div>
+              <div class="meta-item">
+                <span>Latest commit seen</span>
+                <strong class="code">90a1e2830bb3</strong>
+              </div>
+              <div class="meta-item">
+                <span>Commit date</span>
+                <strong>2026-03-12</strong>
+              </div>
+              <div class="meta-item">
+                <span>Headline conclusion</span>
+                <strong>Strong automation core with some stale docs/workflows</strong>
+              </div>
+            </div>
+            <p class="meta-note">
+              Current source-of-truth files are mostly the native build paths, <span class="code">ci.yml</span>, <span class="code">native-release.yml</span>,
+              <span class="code">tests/playwright</span>, <span class="code">.maestro</span>, and <span class="code">scripts/</span>. Older infrastructure docs and the root <span class="code">release.yml</span>
+              look partially out of date.
+            </p>
+          </aside>
+        </div>
+
+        <section class="metrics">
+          <article class="metric fade-up">
+            <p class="metric-value">37</p>
+            <p class="metric-label">GitHub Actions workflows across CI, release, store ops, analytics, and repo automation.</p>
+          </article>
+          <article class="metric fade-up">
+            <p class="metric-value">14</p>
+            <p class="metric-label">Maestro mobile flows for smoke tests, regressions, and cross-app behavior checks.</p>
+          </article>
+          <article class="metric fade-up">
+            <p class="metric-value">43</p>
+            <p class="metric-label">Python automation scripts for release ops, App Store Connect, Google Play, growth, and reporting.</p>
+          </article>
+          <article class="metric fade-up">
+            <p class="metric-value">47</p>
+            <p class="metric-label">Python tests protecting those automation scripts, which is a serious maturity signal.</p>
+          </article>
+        </section>
+      </div>
+    </header>
+
+    <main class="shell">
+      <section class="section">
+        <div class="summary-grid">
+          <article class="panel fade-up">
+            <h3>What is excellent here</h3>
+            <p>
+              He treats app shipping as a system, not a button press. Release publishing, store readiness, screenshots,
+              App Review prep, Play Console validation, and device tests all have explicit code paths.
+            </p>
+          </article>
+          <article class="panel fade-up">
+            <h3>What I would copy first</h3>
+            <p>
+              The <span class="code">Makefile</span>, native CI jobs, release preflight script, Python verification scripts, Playwright
+              store-console checks, and the reusable weekly runner are the highest-leverage patterns.
+            </p>
+          </article>
+          <article class="panel fade-up">
+            <h3>What I would treat carefully</h3>
+            <p>
+              There is visible config drift. Some docs still mention Expo, React Native, or workflow names that do not
+              exist anymore. We should copy living code, not older prose.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="roadmap">
+        <div class="section-head">
+          <div>
+            <span class="section-kicker">Execution roadmap</span>
+            <h2>What I can wire now vs what still needs you</h2>
+          </div>
+          <p>
+            This is the split that matters for handoff. By the time you give me the GitHub repo link, the codebase
+            should already contain the automation shell, workflows, checks, and docs. The remaining work should be
+            mostly credentials, policy, and platform access.
+          </p>
+        </div>
+
+        <div class="execution-strip">
+          <article class="execution-card execution-card--ready fade-up">
+            <div class="execution-label">Ready Now</div>
+            <h3>Things I can complete without your intervention</h3>
+            <ul>
+              <li>Root CI, security, release-artifact, remote-health, and docs-site workflow scaffolding.</li>
+              <li>A monorepo-style <span class="code">Makefile</span> and root verification scripts around the native apps.</li>
+              <li>Repo docs, local Playwright contract checks, PR templates, and future handoff checklists.</li>
+              <li>Fail-fast guards so missing secrets or policy choices are explicit and documented.</li>
+            </ul>
+          </article>
+
+          <article class="execution-card execution-card--blocked fade-up">
+            <div class="execution-label">Blocked On You</div>
+            <h3>Things that require your accounts or decisions</h3>
+            <ul>
+              <li>GitHub secrets, store credentials, signing assets, and any repo settings that require your account access.</li>
+              <li>GitHub secrets, App Store Connect credentials, Android signing files, and Play service account JSON.</li>
+              <li>Repository settings like branch protection, environment reviewers, and optional Pages activation.</li>
+            </ul>
+          </article>
+
+          <article class="execution-card execution-card--later fade-up">
+            <div class="execution-label">Later</div>
+            <h3>High-leverage additions after the base is stable</h3>
+            <ul>
+              <li>Authenticated store-console verification with Playwright storage state.</li>
+              <li>Maestro mobile flows and device automation once the app surfaces stop shifting.</li>
+              <li>Growth loops, ASO rotation, attribution feedback, and project-ops bots.</li>
+            </ul>
+          </article>
+        </div>
+
+        <div class="command-band">
+          <article class="band-card fade-up">
+            <span>Immediate outcome</span>
+            <strong>Push-ready automation shell</strong>
+            <p>The repo should start behaving like a disciplined mobile delivery repo on first push, even before store credentials exist.</p>
+          </article>
+          <article class="band-card fade-up">
+            <span>Manual boundary</span>
+            <strong>Secrets, signing, and store access</strong>
+            <p>I can prepare the slots, guards, and workflows, but I cannot generate the real credentials or platform approvals.</p>
+          </article>
+          <article class="band-card fade-up">
+            <span>Desired handoff</span>
+            <strong>Short, concrete intervention list</strong>
+            <p>You should end up with a precise TODO list instead of a vague “some setup is still left” answer.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="atlas">
+        <div class="section-head">
+          <div>
+            <span class="section-kicker">Tool atlas</span>
+            <h2>The stack by layer</h2>
+          </div>
+          <p>
+            This grouping is the most useful way to understand the repo. It separates delivery plumbing from product
+            growth experiments, so you know what must exist on day one versus what can wait.
+          </p>
+        </div>
+
+        <div class="atlas-grid">
+          <article class="panel fade-up">
+            <div class="lane-title">
+              <span class="lane-dot lane-ci"></span>
+              <h3>1. CI and orchestration</h3>
+            </div>
+            <p>
+              GitHub Actions is the control plane. The repo uses standard hosted runners, reusable workflows, artifact
+              uploads, concurrency controls, environment gating, and branch protection to keep delivery predictable.
+            </p>
+            <div class="chips">
+              <span class="chip">GitHub Actions</span>
+              <span class="chip">Reusable workflow calls</span>
+              <span class="chip">Artifacts</span>
+              <span class="chip">Branch protection</span>
+              <span class="chip">GitHub Projects v2</span>
+            </div>
+          </article>
+
+          <article class="panel fade-up">
+            <div class="lane-title">
+              <span class="lane-dot lane-release"></span>
+              <h3>2. Native build and release</h3>
+            </div>
+            <p>
+              Release automation is native-first: Gradle for Android, Xcodebuild and Fastlane for iOS, plus custom
+              Python wrappers for store verification and Play publish logic. This is the real backbone of the repo.
+            </p>
+            <div class="chips">
+              <span class="chip">Gradle</span>
+              <span class="chip">Xcodebuild</span>
+              <span class="chip">Fastlane</span>
+              <span class="chip">match</span>
+              <span class="chip">App Store Connect API</span>
+              <span class="chip">Google Play Developer API</span>
+            </div>
+          </article>
+
+          <article class="panel fade-up">
+            <div class="lane-title">
+              <span class="lane-dot lane-test"></span>
+              <h3>3. Test automation</h3>
+            </div>
+            <p>
+              The testing model is layered: native unit tests, iOS simulator tests, Android emulator/device tests,
+              Maestro mobile flows, ADB shell checks, Playwright store-console tests, and an optional agent-browser
+              execution path.
+            </p>
+            <div class="chips">
+              <span class="chip">XCTest</span>
+              <span class="chip">Android unit tests</span>
+              <span class="chip">Maestro</span>
+              <span class="chip">ADB</span>
+              <span class="chip">Playwright</span>
+              <span class="chip">agent-browser</span>
+              <span class="chip">PhoneClaw</span>
+            </div>
+          </article>
+
+          <article class="panel fade-up">
+            <div class="lane-title">
+              <span class="lane-dot lane-security"></span>
+              <h3>4. Quality and security</h3>
+            </div>
+            <p>
+              The repo uses both local and CI protection. Trunk handles linting and hygiene. CI adds gitleaks,
+              CodeQL, Snyk, OWASP Dependency-Check, MobSF, npm audit, and custom release-readiness checks.
+            </p>
+            <div class="chips">
+              <span class="chip">Trunk</span>
+              <span class="chip">gitleaks</span>
+              <span class="chip">CodeQL</span>
+              <span class="chip">Snyk</span>
+              <span class="chip">OWASP Dependency-Check</span>
+              <span class="chip">MobSF</span>
+              <span class="chip">Checkov</span>
+            </div>
+          </article>
+
+          <article class="panel fade-up">
+            <div class="lane-title">
+              <span class="lane-dot lane-store"></span>
+              <h3>5. Store ops and metadata</h3>
+            </div>
+            <p>
+              This is unusually strong. The repo has dedicated scripts and workflows for metadata sync, screenshot
+              reset, review readiness, review submission, version resolution, release verification, and console access
+              checks on both Apple and Google sides.
+            </p>
+            <div class="chips">
+              <span class="chip">Fastlane metadata</span>
+              <span class="chip">ASC scripts</span>
+              <span class="chip">Play metadata sync</span>
+              <span class="chip">Store-console browser checks</span>
+              <span class="chip">Release verification</span>
+            </div>
+          </article>
+
+          <article class="panel fade-up">
+            <div class="lane-title">
+              <span class="lane-dot lane-growth"></span>
+              <h3>6. Analytics, ASO, and growth ops</h3>
+            </div>
+            <p>
+              The repo goes beyond build-and-ship. PostHog, Apple Ads, wiki sync, ASO rotation, attribution feedback,
+              North Star metrics, and growth content pipelines are all automated as scheduled workflows.
+            </p>
+            <div class="chips">
+              <span class="chip">PostHog</span>
+              <span class="chip">Apple Ads APIs</span>
+              <span class="chip">GitHub Pages</span>
+              <span class="chip">Wiki sync</span>
+              <span class="chip">North Star guardrails</span>
+            </div>
+          </article>
+
+          <article class="panel fade-up">
+            <div class="lane-title">
+              <span class="lane-dot lane-ai"></span>
+              <h3>7. AI and repo operations</h3>
+            </div>
+            <p>
+              AI is used for more than code generation. Claude reviews pull requests, Seer contributes safety-focused
+              review signals, docs mention CodeRabbit, and project metrics are pushed into issues and board state
+              automatically.
+            </p>
+            <div class="chips">
+              <span class="chip">Claude Code Action</span>
+              <span class="chip">Seer by Sentry</span>
+              <span class="chip">CodeRabbit docs</span>
+              <span class="chip">GitHub Script automation</span>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="drift">
+        <div class="section-head">
+          <div>
+            <span class="section-kicker">Critical analysis</span>
+            <h2>Current truth vs legacy drift</h2>
+          </div>
+          <p>
+            This is the main thing to understand before copying anything. The repo has strong live automation, but it
+            also carries some older files that no longer match the current native architecture.
+          </p>
+        </div>
+
+        <div class="critical-note">
+          <h3>Do not copy the repo literally</h3>
+          <ul>
+            <li>
+              <strong><span class="code">native-release.yml</span> looks current.</strong> It uses Fastlane, Gradle, Xcodebuild-friendly paths,
+              App Store Connect keys, Play keys, release verification, and store metadata steps that match the native folders.
+            </li>
+            <li>
+              <strong><span class="code">release.yml</span> looks stale.</strong> It still references Expo/EAS, <span class="code">package.json</span>, and <span class="code">app.json</span>
+              at the repo root, but those files are not present in the current upstream tree.
+            </li>
+            <li>
+              <strong><span class="code">.github/INFRASTRUCTURE.md</span> and <span class="code">.github/project.yml</span> are stale in places.</strong> They still
+              mention React Native, Expo, and even a different app description. That means prose cannot be trusted as much as executable code.
+            </li>
+            <li>
+              <strong><span class="code">.github/AUTOMATION.md</span> is stale too.</strong> It references <span class="code">pr-automation.yml</span> and
+              <span class="code">issues-automation.yml</span>, which are not present in the workflow directory anymore.
+            </li>
+          </ul>
+        </div>
+
+        <table class="matrix" aria-label="Copy decision matrix">
+          <thead>
+            <tr>
+              <th>Pattern</th>
+              <th>Decision</th>
+              <th>Reason</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="code">Makefile</span> as one human entrypoint</td>
+              <td><span class="status-badge status-copy">Copy</span></td>
+              <td>It centralizes everyday commands and makes the stack teachable.</td>
+            </tr>
+            <tr>
+              <td>Native CI in <span class="code">ci.yml</span></td>
+              <td><span class="status-badge status-copy">Copy</span></td>
+              <td>It verifies Android, iOS, Playwright local checks, Python scripts, and security in one lane.</td>
+            </tr>
+            <tr>
+              <td>Python release/store scripts</td>
+              <td><span class="status-badge status-copy">Copy</span></td>
+              <td>They turn fragile console work into auditable code.</td>
+            </tr>
+            <tr>
+              <td>Weekly growth and ASO automations</td>
+              <td><span class="status-badge status-adapt">Adapt later</span></td>
+              <td>Useful once acquisition and analytics matter, but too heavy for day-one setup.</td>
+            </tr>
+            <tr>
+              <td>PhoneClaw visual checks</td>
+              <td><span class="status-badge status-adapt">Adapt later</span></td>
+              <td>Interesting for physical-device validation, but not essential until the core lanes are stable.</td>
+            </tr>
+            <tr>
+              <td>Expo/EAS release workflow</td>
+              <td><span class="status-badge status-skip">Skip</span></td>
+              <td>It does not match the current native-only layout of the upstream repo.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="section" id="pipelines">
+        <div class="section-head">
+          <div>
+            <span class="section-kicker">Release design</span>
+            <h2>The release conveyor belts</h2>
+          </div>
+          <p>
+            These are the flows worth stealing. Notice how both platforms use the same shape: preflight, credentials,
+            build, upload, verify, then metadata/review work.
+          </p>
+        </div>
+
+        <div class="pipeline-grid">
+          <article class="pipeline fade-up">
+            <h3>iOS release path</h3>
+            <div class="steps">
+              <div class="step">
+                <span class="step-index">1</span>
+                <div>
+                  <strong>Preflight gate</strong>
+                  <div>Run <span class="code">scripts/preflight-release.sh --platform ios --layer 1</span> to validate metadata, screenshots, privacy URLs, and versioning before expensive work starts.</div>
+                </div>
+              </div>
+              <div class="step">
+                <span class="step-index">2</span>
+                <div>
+                  <strong>Provision signing and ASC access</strong>
+                  <div>Ruby + Fastlane + <span class="code">match</span> set up certificates and profiles, while Python checks App Store Connect credentials separately.</div>
+                </div>
+              </div>
+              <div class="step">
+                <span class="step-index">3</span>
+                <div>
+                  <strong>Build and upload to TestFlight</strong>
+                  <div><span class="code">fastlane beta</span> increments the build, builds the archive, and uploads to TestFlight.</div>
+                </div>
+              </div>
+              <div class="step">
+                <span class="step-index">4</span>
+                <div>
+                  <strong>Verify processing</strong>
+                  <div><span class="code">scripts/verify_release.py --platform ios</span> checks that the uploaded build is actually visible and usable.</div>
+                </div>
+              </div>
+              <div class="step">
+                <span class="step-index">5</span>
+                <div>
+                  <strong>Sync metadata and submit review</strong>
+                  <div>Fastlane metadata lanes and ASC helper scripts drive screenshots, listing text, version resolution, and review submission.</div>
+                </div>
+              </div>
+            </div>
+            <p class="timeline-note">
+              Best practice worth copying: he does not trust a successful upload by itself. He verifies the remote store state after upload.
+            </p>
+          </article>
+
+          <article class="pipeline fade-up">
+            <h3>Android release path</h3>
+            <div class="steps">
+              <div class="step">
+                <span class="step-index">1</span>
+                <div>
+                  <strong>Preflight gate</strong>
+                  <div>The same shell preflight script validates Play listing files, changelogs, icons, screenshots, and version codes before release.</div>
+                </div>
+              </div>
+              <div class="step">
+                <span class="step-index">2</span>
+                <div>
+                  <strong>Provision store credentials and keystore</strong>
+                  <div>Google Play API access is checked first, then the Android keystore is decoded and inspected on the runner.</div>
+                </div>
+              </div>
+              <div class="step">
+                <span class="step-index">3</span>
+                <div>
+                  <strong>Build the AAB</strong>
+                  <div><span class="code">./gradlew bundleRelease</span> creates the release artifact using env-provided signing settings.</div>
+                </div>
+              </div>
+              <div class="step">
+                <span class="step-index">4</span>
+                <div>
+                  <strong>Publish with fallback logic</strong>
+                  <div><span class="code">scripts/play_publish.py</span> can retry and fall back from production to a safer track if preconditions fail.</div>
+                </div>
+              </div>
+              <div class="step">
+                <span class="step-index">5</span>
+                <div>
+                  <strong>Verify landing state</strong>
+                  <div><span class="code">scripts/verify_release.py --platform android</span> confirms the build is visible on the expected Play track.</div>
+                </div>
+              </div>
+            </div>
+            <p class="timeline-note">
+              Best practice worth copying: release logic is not buried entirely inside Fastlane. Important store rules live in testable Python.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="testing">
+        <div class="section-head">
+          <div>
+            <span class="section-kicker">Verification model</span>
+            <h2>How the repo tests itself</h2>
+          </div>
+          <p>
+            The strongest idea here is not any single test tool. It is the coverage ladder. Fast, deterministic checks
+            run early. Slower or more fragile device and console checks run in dedicated lanes.
+          </p>
+        </div>
+
+        <table class="matrix" aria-label="Testing matrix">
+          <thead>
+            <tr>
+              <th>Layer</th>
+              <th>Main tools</th>
+              <th>Example entrypoint</th>
+              <th>Why it exists</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Local day-to-day verification</td>
+              <td>Make, Gradle, Xcodebuild</td>
+              <td class="code">make verify</td>
+              <td>One human command that runs platform checks without memorizing platform-specific syntax.</td>
+            </tr>
+            <tr>
+              <td>iOS test lane</td>
+              <td>Xcodebuild, simulator resolution script</td>
+              <td class="code">./scripts/ios_verify.sh</td>
+              <td>Runs unit tests on a valid simulator automatically, which removes a common source of local friction.</td>
+            </tr>
+            <tr>
+              <td>Android unit and instrumentation</td>
+              <td>Gradle, Android test APIs</td>
+              <td class="code">./gradlew testDebugUnitTest assembleDebug</td>
+              <td>Covers Kotlin logic quickly and leaves instrumented tests available when hardware/emulators are ready.</td>
+            </tr>
+            <tr>
+              <td>Mobile UI smoke and regressions</td>
+              <td>Maestro, Android emulator runner</td>
+              <td class="code">maestro test .maestro/smoke-test.yaml</td>
+              <td>Exercises real user flows, app lifecycle, notifications, and regression paths on mobile UI.</td>
+            </tr>
+            <tr>
+              <td>Shell-driven device behavior</td>
+              <td>ADB, dumpsys, uiautomator</td>
+              <td class="code">bash scripts/device-tests/run-all.sh</td>
+              <td>Validates things normal UI tests often miss: lock screen state, media buttons, notifications, audio focus, cross-app return.</td>
+            </tr>
+            <tr>
+              <td>Visual physical-device experiments</td>
+              <td>PhoneClaw scripts</td>
+              <td class="code">bash scripts/device-tests/phoneclaw/setup-device.sh</td>
+              <td>Experimental layer for device-side visual confirmation. Interesting, but optional at first.</td>
+            </tr>
+            <tr>
+              <td>Store readiness checks</td>
+              <td>Playwright, agent-browser</td>
+              <td class="code">npm run verify:strict</td>
+              <td>Checks screenshot inventory and metadata readiness before store submission work begins.</td>
+            </tr>
+            <tr>
+              <td>Read-only console verification</td>
+              <td>Playwright, saved auth state, agent-browser</td>
+              <td class="code">npm run test:console</td>
+              <td>Confirms App Store Connect and Play Console show the expected app/version state without mutating store data.</td>
+            </tr>
+            <tr>
+              <td>Automation script protection</td>
+              <td>Pytest, coverage</td>
+              <td class="code">python -m pytest scripts/tests/ -q --cov=scripts</td>
+              <td>Protects the store, release, growth, and reporting scripts that would otherwise be the most fragile part of the system.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="section" id="security">
+        <div class="section-head">
+          <div>
+            <span class="section-kicker">Protection layers</span>
+            <h2>Quality and security stack</h2>
+          </div>
+          <p>
+            He uses multiple concentric rings instead of one giant gate. That is the right model for a repo that mixes
+            Swift, Kotlin, shell, YAML, Node, and Python.
+          </p>
+        </div>
+
+        <div class="ops-grid">
+          <article class="panel fade-up">
+            <h3>Trunk as local hygiene hub</h3>
+            <p>
+              <span class="code">.trunk/trunk.yaml</span> enables a broad lint mix including yamllint, trufflehog, taplo, oxipng, shfmt,
+              shellcheck, markdownlint, osv-scanner, ktlint, dotenv-linter, checkov, actionlint, eslint, and prettier.
+            </p>
+          </article>
+          <article class="panel fade-up">
+            <h3>Custom pre-commit hook</h3>
+            <p>
+              <span class="code">scripts/pre-commit</span> adds secret scanning and targeted checks before changes even leave a developer
+              machine. This is a strong pattern because it pushes failures earlier than CI.
+            </p>
+          </article>
+          <article class="panel fade-up">
+            <h3>Security workflow in CI</h3>
+            <p>
+              <span class="code">security.yml</span> runs npm audit, Snyk, OWASP Dependency-Check, CodeQL, gitleaks, and MobSF, then publishes
+              results as artifacts. That gives both source-code and mobile-specific coverage.
+            </p>
+          </article>
+          <article class="panel fade-up">
+            <h3>Secret fingerprints are customized</h3>
+            <p>
+              <span class="code">.gitleaks.toml</span> adds project-specific rules for Sentry auth tokens, Sentry DSNs, Expo tokens, and
+              Firebase keys. That means the secret scan is tuned to the actual ecosystem being used.
+            </p>
+          </article>
+          <article class="panel fade-up">
+            <h3>Release verification is remote-state aware</h3>
+            <p>
+              <span class="code">verify_release.py</span> checks what the store actually sees after upload, rather than assuming a successful
+              API call means the release is truly ready.
+            </p>
+          </article>
+          <article class="panel fade-up">
+            <h3>Crash health is part of CI</h3>
+            <p>
+              There is even a Crashlytics stability check wired into CI using BigQuery export access. That is more
+              advanced than typical mobile repos and shows production operations are part of the definition of done.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <span class="section-kicker">Automation beyond shipping</span>
+            <h2>Repo ops, growth loops, and AI assistance</h2>
+          </div>
+          <p>
+            These layers are impressive, but they are not all equally urgent. The trick is to borrow them in the right order.
+          </p>
+        </div>
+
+        <div class="ops-grid">
+          <article class="panel fade-up">
+            <h3>Reusable weekly runner</h3>
+            <p>
+              <span class="code">weekly-shared.yml</span> is a very good pattern. It standardizes Python setup, optional package install,
+              command execution, commits, wiki publishing, issue creation, and artifact upload into one reusable workflow.
+            </p>
+          </article>
+          <article class="panel fade-up">
+            <h3>Project metrics pushed into GitHub</h3>
+            <p>
+              <span class="code">main.yml</span> computes issue, PR, activity, throughput, and Projects v2 swimlane metrics, then writes them
+              into a status issue. This is repo operations as code.
+            </p>
+          </article>
+          <article class="panel fade-up">
+            <h3>Growth automation is code, not spreadsheets</h3>
+            <p>
+              The scripts folder includes ASO keyword rotation, attribution feedback, paid acquisition seeding, North
+              Star guardrails, review velocity tracking, and content generation. Few app repos go this far.
+            </p>
+          </article>
+          <article class="panel fade-up">
+            <h3>AI review is wired into PR flow</h3>
+            <p>
+              <span class="code">claude-review.yml</span> runs advisory PR review, optional auto-approval when review passes, and on-demand help
+              through <span class="code">@claude</span>. Seer is also configured as a review bot with required status checks.
+            </p>
+          </article>
+          <article class="panel fade-up">
+            <h3>Store visibility is browser-tested</h3>
+            <p>
+              The Playwright package is a major differentiator. It treats store consoles like production interfaces and
+              verifies them with authenticated, read-only browser state.
+            </p>
+          </article>
+          <article class="panel fade-up">
+            <h3>Documentation publishing is automated</h3>
+            <p>
+              Wiki sync and GitHub Pages publishing mean documentation and growth content are part of the same
+              automation graph, not separate manual chores.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="adoption">
+        <div class="section-head">
+          <div>
+            <span class="section-kicker">Our setup path</span>
+            <h2>What we can set up before you give me your repo</h2>
+          </div>
+          <p>
+            Without your actual GitHub repo, the main thing I can do now is build the operating model and the copy order
+            so we do not waste time later. This is the sequence I recommend.
+          </p>
+        </div>
+
+        <div class="adoption-grid">
+          <article class="panel fade-up">
+            <h3>Stage 1: Define now</h3>
+            <ul>
+              <li>Choose the branch model: likely <span class="code">develop</span> and <span class="code">main</span>, or a simpler trunk model if you want less overhead.</li>
+              <li>Define environments and release tracks: TestFlight internal, App Store review, Play internal, Play production.</li>
+              <li>Define the secret matrix: App Store Connect, Play API, signing, analytics, crash reporting, CI-only auth state.</li>
+              <li>Define the canonical commands we want to expose later through <span class="code">make</span>.</li>
+            </ul>
+          </article>
+
+          <article class="panel fade-up">
+            <h3>Stage 2: Copy first when repo arrives</h3>
+            <ul>
+              <li>Root <span class="code">Makefile</span> with <span class="code">verify</span>, platform-specific verify, Maestro, Playwright, and store-check targets.</li>
+              <li>Minimal <span class="code">ci.yml</span> that proves Android build/tests, iOS build/tests, Python automation tests, and security scans.</li>
+              <li><span class="code">scripts/preflight-release.sh</span> and <span class="code">scripts/verify_release.py</span> style gates.</li>
+              <li><span class="code">tests/playwright</span> for local readiness plus read-only store-console verification.</li>
+            </ul>
+          </article>
+
+          <article class="panel fade-up">
+            <h3>Stage 3: Add later if they earn their keep</h3>
+            <ul>
+              <li>Weekly growth loops and ASO rotations.</li>
+              <li>PhoneClaw or other physical-device visual validation.</li>
+              <li>Project-board metrics issues and review-velocity bots.</li>
+              <li>Automated content and GitHub Pages publishing.</li>
+            </ul>
+          </article>
+        </div>
+
+        <table class="matrix" aria-label="Immediate bootstrap checklist">
+          <thead>
+            <tr>
+              <th>Bootstrap item</th>
+              <th>Why we should do it</th>
+              <th>Recommended shape</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Repository folder contract</td>
+              <td>Prevents workflow sprawl and makes future automation composable.</td>
+              <td class="code">.github/workflows/, scripts/, tests/playwright/, .maestro/, docs/</td>
+            </tr>
+            <tr>
+              <td>Human command contract</td>
+              <td>Removes tool memorization and makes onboarding faster.</td>
+              <td class="code">make verify, make verify-ios, make verify-android, make maestro-ios, make maestro-android, make store-checks</td>
+            </tr>
+            <tr>
+              <td>Secret inventory spreadsheet or markdown</td>
+              <td>Most mobile release automation dies from invisible credential debt.</td>
+              <td>Track secret name, owner, source system, rotation policy, and workflow consumers.</td>
+            </tr>
+            <tr>
+              <td>Release readiness checklist as code</td>
+              <td>Store failures should happen before archive/upload time.</td>
+              <td>Borrow the upstream preflight script shape and tune it to your assets, URLs, and changelog rules.</td>
+            </tr>
+            <tr>
+              <td>Store console auth-state plan</td>
+              <td>Needed for browser-based verification later.</td>
+              <td>Decide who records Playwright auth state, where it is refreshed, and which CI secrets store the JSON blobs.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="section" id="sources">
+        <div class="section-head">
+          <div>
+            <span class="section-kicker">Primary sources</span>
+            <h2>The files that matter most</h2>
+          </div>
+          <p>
+            If you want to audit the upstream repo yourself, start here. These are the files I would treat as the best
+            source of truth.
+          </p>
+        </div>
+
+        <div class="source-grid">
+          <article class="panel source-card fade-up">
+            <small>Core build and test entrypoints</small>
+            <a href="https://github.com/IgorGanapolsky/Random-Timer/blob/develop/README.md" target="_blank" rel="noreferrer">README.md</a>
+            <a href="https://github.com/IgorGanapolsky/Random-Timer/blob/develop/Makefile" target="_blank" rel="noreferrer">Makefile</a>
+            <a href="https://github.com/IgorGanapolsky/Random-Timer/blob/develop/scripts/ios_verify.sh" target="_blank" rel="noreferrer">scripts/ios_verify.sh</a>
+            <a href="https://github.com/IgorGanapolsky/Random-Timer/blob/develop/scripts/preflight-release.sh" target="_blank" rel="noreferrer">scripts/preflight-release.sh</a>
+          </article>
+
+          <article class="panel source-card fade-up">
+            <small>CI and release truth</small>
+            <a href="https://github.com/IgorGanapolsky/Random-Timer/blob/develop/.github/workflows/ci.yml" target="_blank" rel="noreferrer">.github/workflows/ci.yml</a>
+            <a href="https://github.com/IgorGanapolsky/Random-Timer/blob/develop/.github/workflows/native-release.yml" target="_blank" rel="noreferrer">.github/workflows/native-release.yml</a>
+            <a href="https://github.com/IgorGanapolsky/Random-Timer/blob/develop/.github/workflows/device-tests.yml" target="_blank" rel="noreferrer">.github/workflows/device-tests.yml</a>
+            <a href="https://github.com/IgorGanapolsky/Random-Timer/blob/develop/.github/workflows/store-console-verification.yml" target="_blank" rel="noreferrer">.github/workflows/store-console-verification.yml</a>
+          </article>
+
+          <article class="panel source-card fade-up">
+            <small>Store and browser automation</small>
+            <a href="https://github.com/IgorGanapolsky/Random-Timer/blob/develop/tests/playwright/README.md" target="_blank" rel="noreferrer">tests/playwright/README.md</a>
+            <a href="https://github.com/IgorGanapolsky/Random-Timer/blob/develop/tests/playwright/package.json" target="_blank" rel="noreferrer">tests/playwright/package.json</a>
+            <a href="https://github.com/IgorGanapolsky/Random-Timer/tree/develop/.maestro" target="_blank" rel="noreferrer">.maestro/</a>
+            <a href="https://github.com/IgorGanapolsky/Random-Timer/tree/develop/scripts/device-tests" target="_blank" rel="noreferrer">scripts/device-tests/</a>
+          </article>
+
+          <article class="panel source-card fade-up">
+            <small>Quality, security, and automation</small>
+            <a href="https://github.com/IgorGanapolsky/Random-Timer/blob/develop/.trunk/trunk.yaml" target="_blank" rel="noreferrer">.trunk/trunk.yaml</a>
+            <a href="https://github.com/IgorGanapolsky/Random-Timer/blob/develop/.gitleaks.toml" target="_blank" rel="noreferrer">.gitleaks.toml</a>
+            <a href="https://github.com/IgorGanapolsky/Random-Timer/blob/develop/.github/workflows/security.yml" target="_blank" rel="noreferrer">.github/workflows/security.yml</a>
+            <a href="https://github.com/IgorGanapolsky/Random-Timer/blob/develop/.github/workflows/weekly-shared.yml" target="_blank" rel="noreferrer">.github/workflows/weekly-shared.yml</a>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer class="shell">
+      <p>
+        This document was generated from a direct repository analysis of the upstream <span class="code">develop</span> branch on 2026-03-12.
+        It is meant to become the blueprint for your own repo once you share it.
+      </p>
+    </footer>
+  </body>
+</html>

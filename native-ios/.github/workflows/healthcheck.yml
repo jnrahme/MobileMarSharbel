@@ -1,0 +1,23 @@
+name: iOS Health Check
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  healthcheck:
+    name: Build, Privacy, And Dependency Health Check
+    runs-on: macos-latest
+
+    steps:
+      - name: Check Out Repository
+        uses: actions/checkout@v4
+
+      - name: Show Xcode Version
+        run: xcodebuild -version
+
+      - name: Run Health Check
+        run: ./scripts/healthcheck.sh

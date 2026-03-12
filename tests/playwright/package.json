@@ -1,0 +1,15 @@
+{
+  "name": "mobiletest-root-playwright",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:local": "playwright test specs/local --project=local-checks",
+    "verify": "npm run test:local",
+    "install:browsers": "playwright install --with-deps chromium"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.1",
+    "typescript": "^5.9.3"
+  }
+}
+

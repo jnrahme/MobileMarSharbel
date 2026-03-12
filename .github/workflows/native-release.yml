@@ -1,0 +1,102 @@
+name: Native Release Readiness
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: "Which platform artifacts should be built"
+        type: choice
+        required: true
+        default: both
+        options:
+          - ios
+          - android
+          - both
+      artifact_label:
+        description: "Optional artifact label"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: native-release-${{ github.ref_name }}-${{ inputs.platform || 'both' }}
+  cancel-in-progress: false
+
+jobs:
+  ios-artifacts:
+    name: iOS Artifacts
+    if: ${{ inputs.platform == 'ios' || inputs.platform == 'both' }}
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Make scripts executable
+        run: chmod +x scripts/*.sh native-ios/scripts/healthcheck.sh
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Run iOS release-readiness build
+        run: SKIP_REMOTE_CHECKS=1 make verify-ios
+
+      - name: Resolve artifact label
+        id: meta
+        env:
+          INPUT_LABEL: ${{ inputs.artifact_label }}
+        run: |
+          label="${INPUT_LABEL:-${GITHUB_REF_NAME}-${GITHUB_RUN_NUMBER}}"
+          label="${label//\//-}"
+          echo "label=$label" >> "$GITHUB_OUTPUT"
+
+      - name: Zip iOS source snapshot
+        run: ditto -c -k --keepParent native-ios "native-ios-${{ steps.meta.outputs.label }}.zip"
+
+      - name: Upload iOS snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-source-snapshot
+          path: native-ios-${{ steps.meta.outputs.label }}.zip
+
+  android-artifacts:
+    name: Android Artifacts
+    if: ${{ inputs.platform == 'android' || inputs.platform == 'both' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Setup Gradle cache
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Make scripts executable
+        run: chmod +x scripts/*.sh native-android/gradlew native-android/scripts/healthcheck.sh
+
+      - name: Run Android release-readiness build
+        run: SKIP_REMOTE_CHECKS=1 make verify-android
+
+      - name: Upload Android debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-debug-apk
+          path: native-android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+
+      - name: Upload Android release bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-release-aab
+          path: native-android/app/build/outputs/bundle/release/*.aab
+          if-no-files-found: error
+

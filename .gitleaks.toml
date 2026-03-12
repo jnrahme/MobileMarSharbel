@@ -1,0 +1,31 @@
+title = "MobileTest Root Secret Detection"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "apple-private-key"
+description = "Apple private key or App Store Connect key material"
+regex = '''-----BEGIN PRIVATE KEY-----[\s\S]{80,}-----END PRIVATE KEY-----'''
+keywords = ["BEGIN PRIVATE KEY"]
+
+[[rules]]
+id = "google-service-account"
+description = "Google service account JSON"
+regex = '''"type"\s*:\s*"service_account"'''
+keywords = ["service_account"]
+
+[[rules]]
+id = "android-keystore-password"
+description = "Android keystore credentials"
+regex = '''(?i)(storePassword|keyPassword)\s*=\s*.+'''
+keywords = ["storePassword", "keyPassword"]
+
+[allowlist]
+paths = [
+  '''\.git/''',
+  '''node_modules/''',
+  '''build/''',
+  '''DerivedData/''',
+]
+

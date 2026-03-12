@@ -1,0 +1,59 @@
+name: Android Release
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+
+jobs:
+  release:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Prepare signing files
+        shell: bash
+        run: |
+          if [[ -n "${ANDROID_KEYSTORE_BASE64:-}" ]]; then
+            echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > saint-charbel-upload.keystore
+            {
+              echo "storeFile=${PWD}/saint-charbel-upload.keystore"
+              echo "storePassword=${ANDROID_KEYSTORE_PASSWORD}"
+              echo "keyAlias=${ANDROID_KEY_ALIAS}"
+              echo "keyPassword=${ANDROID_KEY_PASSWORD}"
+            } > keystore.properties
+          fi
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+
+      - name: Make scripts executable
+        run: chmod +x gradlew scripts/healthcheck.sh
+
+      - name: Run health check
+        run: ./scripts/healthcheck.sh
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: saint-charbel-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Upload release bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: saint-charbel-release-bundle
+          path: app/build/outputs/bundle/release/*.aab
