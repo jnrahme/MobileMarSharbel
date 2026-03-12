@@ -1,4 +1,4 @@
-# Saint Charbel Mobile Automation Shell
+# Saint Charbel Mobile
 
 [![Platform: iOS](https://img.shields.io/badge/iOS-17%2B-0A84FF?logo=apple&logoColor=white)](native-ios/)
 [![Platform: Android](https://img.shields.io/badge/Android-8%2B-3DDC84?logo=android&logoColor=white)](native-android/)
@@ -6,12 +6,52 @@
 [![Swift](https://img.shields.io/badge/Swift-5-F05138?logo=swift&logoColor=white)](native-ios/)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.0.21-7F52FF?logo=kotlin&logoColor=white)](native-android/)
 
-Root automation layer for the native Saint Charbel apps in:
+**Saint Charbel for prayer, story, and daily stillness.** This repo contains the native iPhone and Android companion for `marsharbel.com`: a child-friendly Saint Charbel storybook, a guided Rosary companion with daily mystery sets, and core prayer texts in one focused mobile experience.
+
+**Current gallery is iPhone-first.** Android store-ready screenshots are the next capture pass so both storefronts can tell the same story.
+
+## App Experience
+
+<p align="center">
+  <img src="docs/assets/app/ios/home.png" width="180" alt="Saint Charbel iPhone home screen" />
+  <img src="docs/assets/app/ios/story-reader.png" width="180" alt="Saint Charbel iPhone story reader screen" />
+  <img src="docs/assets/app/ios/rosary-hub.png" width="180" alt="Saint Charbel iPhone rosary hub screen" />
+  <img src="docs/assets/app/ios/rosary-set.png" width="180" alt="Saint Charbel iPhone luminous mysteries screen" />
+</p>
+<p align="center"><em>iPhone flow: home → narrated storybook → daily Rosary guidance → mystery set detail.</em></p>
+
+## What The App Does
+
+- Opens with a calm home screen that routes directly into the storybook or the Rosary flow.
+- Keeps Saint Charbel content close to the website while presenting it in a more focused native mobile experience.
+- Uses the same live media library for story artwork, narration, and guided Rosary audio.
+
+## Story Experience
+
+- The story section behaves like a simple children's bookshelf instead of a dense article list.
+- Opening Saint Charbel's book leads into a swipeable reader with large artwork, short page copy, and narration that can continue forward from the current page.
+- The content model is reusable, so future saints can be added as new books instead of reworking the reader architecture.
+
+## Rosary Experience
+
+- The Rosary tab recommends the mystery set for today first, so the user does not have to remember the schedule.
+- Each mystery set opens into a practical prayer path with mystery summaries, spiritual fruit, bead-by-bead prompts, and optional guided audio.
+- Core Rosary prayers stay available inside the app, which makes the experience work for personal prayer, family prayer, and catechetical use.
+
+## Product Docs
+
+- [`docs/index.html`](docs/index.html) is the docs landing page.
+- [`docs/app-experience.html`](docs/app-experience.html) is the polished product walkthrough with the full iPhone gallery.
+- [`docs/random-timer-automation-playbook.html`](docs/random-timer-automation-playbook.html) explains the automation model adopted from Igor Ganapolsky's `Random-Timer`.
+
+## Automation Shell
+
+This repo is also the root automation layer for the native Saint Charbel apps in:
 
 - `native-ios/`
 - `native-android/`
 
-This repo is being shaped after the disciplined root-automation model used in Igor Ganapolsky's `Random-Timer` repo, but adapted to this project's actual state.
+It is being shaped after the disciplined root-automation model used in Igor Ganapolsky's `Random-Timer` repo, but adapted to this project's actual state.
 
 It centralizes:
 
