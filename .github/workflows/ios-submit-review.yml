@@ -1,0 +1,96 @@
+name: iOS Submit Review
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Optional App Store version (defaults to MARKETING_VERSION)"
+        required: false
+        type: string
+      locale:
+        description: "App Store locale to submit"
+        required: true
+        default: "en-US"
+        type: string
+      dry_run:
+        description: "Sync metadata and verify readiness without submitting"
+        required: true
+        default: true
+        type: boolean
+      min_iphone:
+        description: "Minimum complete large-iPhone screenshots required"
+        required: true
+        default: "1"
+        type: string
+      min_ipad:
+        description: "Minimum complete large-iPad screenshots required"
+        required: true
+        default: "1"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  submit:
+    runs-on: macos-15
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ensure scripts are executable
+        run: chmod +x scripts/*.sh
+
+      - name: Run iOS preflight gate
+        run: bash scripts/preflight-release.sh --platform ios --layer 1
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+          bundler-cache: true
+          working-directory: native-ios
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Python dependencies
+        run: python3 -m pip install pyjwt cryptography requests
+
+      - name: Write App Store Connect key for fastlane
+        env:
+          APPSTORE_PRIVATE_KEY: ${{ secrets.APPSTORE_PRIVATE_KEY }}
+          APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.appstoreconnect/private_keys
+          printf '%s' "$APPSTORE_PRIVATE_KEY" > ~/.appstoreconnect/private_keys/AuthKey_${APPSTORE_KEY_ID}.p8
+
+      - name: Run iOS submit flow
+        env:
+          APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+          APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+          IOS_VERSION: ${{ inputs.version }}
+          IOS_LOCALE: ${{ inputs.locale }}
+          IOS_MIN_IPHONE: ${{ inputs.min_iphone }}
+          IOS_MIN_IPAD: ${{ inputs.min_ipad }}
+        run: |
+          if [[ "${{ inputs.dry_run }}" == "true" ]]; then
+            make ios-submit-review-dry
+          else
+            make ios-submit-review
+          fi
+
+      - name: Poll final App Store state
+        if: ${{ inputs.dry_run == false }}
+        env:
+          APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+          APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+          IOS_VERSION: ${{ inputs.version }}
+        run: |
+          if [[ -z "${IOS_VERSION}" ]]; then
+            IOS_VERSION="$(sed -n 's/.*MARKETING_VERSION = \([^;]*\);/\1/p' native-ios/SaintCharbelApp.xcodeproj/project.pbxproj | head -1)"
+          fi
+          python3 scripts/asc_poll_version_state.py --version "$IOS_VERSION" --wait --timeout 1800 --poll-interval 20

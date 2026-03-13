@@ -6,6 +6,7 @@
 .PHONY: run-ios-sim run-android-emulator run-android-device maestro-ios maestro-android
 .PHONY: remote-health remote-health-ios remote-health-android
 .PHONY: playwright-install playwright-verify-local playwright-verify-strict install-hooks gitleaks-install security-gitleaks print-blockers docs-site
+.PHONY: ios-store-assets ios-metadata-sync ios-testflight ios-release-build ios-asc-ready ios-submit-review ios-submit-review-dry ios-asc-poll
 
 IOS_DIR := native-ios
 ANDROID_DIR := native-android
@@ -26,6 +27,13 @@ help:
 		'  make run-android-device    Build, install, and launch Android on a connected device' \
 		'  make maestro-ios           Run the iOS Maestro smoke flow' \
 		'  make maestro-android       Run the Android Maestro smoke flow' \
+		'  make ios-store-assets      Export App Store screenshot assets into native-ios/fastlane/screenshots' \
+		'  make ios-metadata-sync     Upload iOS App Store metadata and screenshots via fastlane' \
+		'  make ios-release-build     Create a signed local iOS release archive/IPA via fastlane' \
+		'  make ios-testflight        Build and upload the iOS app to TestFlight via fastlane' \
+		'  make ios-asc-ready         Verify App Store Connect submission readiness via API' \
+		'  make ios-submit-review-dry Sync assets, upload metadata, and run ASC readiness without submitting' \
+		'  make ios-submit-review     Run the full iOS submit-for-review CLI flow' \
 		'  make playwright-verify-strict Run the strict local Playwright release-readiness checks' \
 		'  make remote-health         Run full remote dependency checks on both native apps' \
 		'  make security-gitleaks     Install gitleaks if needed and run a repo secret scan' \
@@ -63,7 +71,7 @@ preflight-release-android:
 	@bash scripts/preflight-release.sh --platform android --layer 1
 
 store-access-check:
-	@python3 scripts/check_store_access.py --platform both
+	@bash scripts/store-python.sh scripts/check_store_access.py --platform both
 
 cli-smoke:
 	@bash scripts/cli-smoke-test.sh
@@ -82,6 +90,66 @@ maestro-ios:
 
 maestro-android:
 	@bash scripts/maestro-smoke.sh android
+
+ios-store-assets:
+	@bash scripts/sync_ios_store_assets.sh --locale "$${IOS_LOCALE:-en-US}"
+
+ios-metadata-sync: ios-store-assets
+	@if [ -n "$${IOS_VERSION:-}" ]; then \
+		bash scripts/ios-fastlane.sh ios metadata version:"$${IOS_VERSION}"; \
+	else \
+		bash scripts/ios-fastlane.sh ios metadata; \
+	fi
+
+ios-release-build:
+	@bash scripts/ios-fastlane.sh ios release_build
+
+ios-testflight:
+	@bash scripts/ios-fastlane.sh ios beta
+
+ios-asc-ready:
+	@version="$${IOS_VERSION:-$$(sed -n "s/.*MARKETING_VERSION = \\([^;]*\\);/\\1/p" native-ios/SaintCharbelApp.xcodeproj/project.pbxproj | head -1)}"; \
+	bash scripts/store-python.sh scripts/asc_verify_ready.py \
+		--version "$$version" \
+		--locale "$${IOS_LOCALE:-en-US}" \
+		--min-iphone "$${IOS_MIN_IPHONE:-1}" \
+		--min-ipad "$${IOS_MIN_IPAD:-1}"
+
+ios-submit-review-dry:
+	@if [ -n "$${IOS_VERSION:-}" ]; then \
+		bash scripts/ios-submit-review.sh \
+			--version "$${IOS_VERSION}" \
+			--locale "$${IOS_LOCALE:-en-US}" \
+			--min-iphone "$${IOS_MIN_IPHONE:-1}" \
+			--min-ipad "$${IOS_MIN_IPAD:-1}" \
+			--dry-run; \
+	else \
+		bash scripts/ios-submit-review.sh \
+			--locale "$${IOS_LOCALE:-en-US}" \
+			--min-iphone "$${IOS_MIN_IPHONE:-1}" \
+			--min-ipad "$${IOS_MIN_IPAD:-1}" \
+			--dry-run; \
+	fi
+
+ios-submit-review:
+	@if [ -n "$${IOS_VERSION:-}" ]; then \
+		bash scripts/ios-submit-review.sh \
+			--version "$${IOS_VERSION}" \
+			--locale "$${IOS_LOCALE:-en-US}" \
+			--min-iphone "$${IOS_MIN_IPHONE:-1}" \
+			--min-ipad "$${IOS_MIN_IPAD:-1}"; \
+	else \
+		bash scripts/ios-submit-review.sh \
+			--locale "$${IOS_LOCALE:-en-US}" \
+			--min-iphone "$${IOS_MIN_IPHONE:-1}" \
+			--min-ipad "$${IOS_MIN_IPAD:-1}"; \
+	fi
+
+ios-asc-poll:
+	@version="$${IOS_VERSION:-$$(sed -n "s/.*MARKETING_VERSION = \\([^;]*\\);/\\1/p" native-ios/SaintCharbelApp.xcodeproj/project.pbxproj | head -1)}"; \
+	bash scripts/store-python.sh scripts/asc_poll_version_state.py \
+		--version "$$version" \
+		$${IOS_WAIT:+--wait}
 
 remote-health: remote-health-ios remote-health-android
 

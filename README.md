@@ -71,6 +71,9 @@ It centralizes:
 - Runs strict local Playwright checks for repo and release-readiness contracts
 - Runs release preflight checks modeled after `Random-Timer`
 - Bootstraps `gitleaks` locally for root secret scanning
+- Syncs iOS App Store metadata and screenshots from the CLI
+- Verifies iOS App Store submission readiness through the App Store Connect API
+- Supports local TestFlight upload and App Review submission through fastlane
 - Enforces the `main` promotion rule: PRs into `main` must come from `develop`, `release/vX.Y.Z`, or `hotfix/vX.Y.Z`
 
 ## Automation Surface
@@ -90,6 +93,13 @@ make verify-full
 make preflight-release
 make store-access-check
 make security-gitleaks
+make ios-store-assets
+make ios-metadata-sync
+make ios-release-build
+make ios-asc-ready
+make ios-testflight
+make ios-submit-review-dry
+make ios-submit-review
 ```
 
 ### Local App Launch
@@ -129,6 +139,10 @@ Root GitHub workflows currently cover:
   Root `gitleaks` scan and dependency review
 - `Native Release Readiness`
   Artifact-oriented iOS and Android release builds after preflight
+- `iOS Metadata Sync`
+  Manual App Store metadata and screenshot upload via fastlane
+- `iOS Submit Review`
+  Manual App Store readiness gate and submit-for-review flow via fastlane + App Store Connect API
 - `Remote Dependency Health`
   Scheduled checks for website, story, and audio dependencies
 - `Docs Site`
@@ -144,6 +158,12 @@ These are the main `Random-Timer`-style quick wins already wired:
   Checks version alignment, key repo files, icons, privacy manifest, and release-readiness documentation before deeper release work
 - [`scripts/check_store_access.py`](scripts/check_store_access.py)
   Read-only credential check path for Google Play and App Store Connect
+- [`scripts/sync_ios_store_assets.sh`](scripts/sync_ios_store_assets.sh)
+  Exports App Store-sized screenshots into `native-ios/fastlane/screenshots/en-US`
+- [`scripts/asc_verify_ready.py`](scripts/asc_verify_ready.py)
+  Hard App Store Connect readiness gate for screenshots, pricing, review contact info, privacy URL, and attached build state
+- [`scripts/ios-submit-review.sh`](scripts/ios-submit-review.sh)
+  One CLI flow to sync assets, upload metadata, verify readiness, and submit for review
 - [`scripts/validate_release_branch.py`](scripts/validate_release_branch.py)
   Validates which branches may promote into `main`
 - [`scripts/hygiene-check.sh`](scripts/hygiene-check.sh)
@@ -175,9 +195,9 @@ This repo is not yet the full `Random-Timer` operations stack. The main blocked 
 - App Store Connect credentials and access
 - Google Play service account credentials and app access
 - Android signing assets and `keystore.properties`
-- Fastlane metadata and screenshot automation
 - Store-console browser verification
-- Real publish / review submission flows
+- CI signing assets if you want fully unattended GitHub-hosted TestFlight uploads
+- iPad App Store screenshots while the iOS target remains universal (`TARGETED_DEVICE_FAMILY = "1,2"`)
 
 See:
 
@@ -191,7 +211,7 @@ See:
 The repo does **not** yet include most of Igor's larger ops layer, including:
 
 - App Store / Play publish-and-verify automation
-- metadata sync and screenshot reset tooling
+- screenshot reset tooling
 - store-console browser checks
 - device-test workflow depth
 - project/status automation

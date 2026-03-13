@@ -125,9 +125,16 @@ The repository now includes baseline App Store submission readiness work:
 These still need to be completed in Apple Developer / App Store Connect:
 
 - production signing certificates and provisioning
-- App Store Connect metadata, screenshots, and privacy answers
-- support URL and privacy policy URL
-- final App Review submission and TestFlight/App Store rollout
+- iPad App Store screenshots if the target stays universal
+- final pricing / availability confirmation in App Store Connect
+- final rollout decision after TestFlight / App Review approval
+
+The repo now includes local fastlane and API-driven helpers for the rest:
+
+- `bundle exec fastlane ios beta`
+- `bundle exec fastlane ios metadata`
+- `bundle exec fastlane ios submit_review`
+- `python3 ../scripts/asc_verify_ready.py --version <X.Y.Z>`
 
 ## Remote Dependency Notes
 

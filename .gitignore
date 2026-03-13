@@ -3,6 +3,7 @@
 
 # Root node artifacts
 node_modules/
+.playwright-cli/
 tests/playwright/node_modules/
 tests/playwright/playwright-report/
 tests/playwright/test-results/
@@ -15,12 +16,20 @@ tests/playwright/.auth/
 *.aab
 *.apk
 *.xcresult
+image-submission-ios/
+image-submission-ipad/
 
 # iOS
 DerivedData/
 native-ios/build/
 native-ios/*.ipa
 native-ios/.swiftpm/
+native-ios/.bundle/
+native-ios/vendor/
+native-ios/fastlane/Preview.html
+native-ios/fastlane/report.xml
+native-ios/fastlane/screenshots.html
+native-ios/fastlane/screenshots/
 
 # Android
 native-android/.gradle/
@@ -38,3 +47,4 @@ native-android/*.keystore
 *.json.secret
 .env
 .env.*
+scripts/__pycache__/
