@@ -103,6 +103,8 @@ platform :ios do
       build_number: build_number
     )
 
+    team_id = ENV["APPLE_DEVELOPER_TEAM_ID"].to_s.strip
+
     common_args = {
       project: xcodeproj_path,
       scheme: scheme_name,
@@ -112,6 +114,7 @@ platform :ios do
       output_name: "SaintCharbelApp.ipa",
       clean: true
     }
+    common_args[:export_team_id] = team_id unless team_id.empty?
 
     if ENV["MATCH_GIT_URL"]
       profile_name = install_match_signing(api_key: api_key, readonly: true)
@@ -120,12 +123,12 @@ platform :ios do
         path: xcodeproj_path,
         use_automatic_signing: false,
         targets: [scheme_name],
+        team_id: team_id,
         code_sign_identity: "Apple Distribution",
         profile_name: profile_name
       )
 
-      build_app(
-        **common_args,
+      build_args = common_args.merge(
         export_options: {
           signingStyle: "manual",
           provisioningProfiles: {
@@ -133,6 +136,8 @@ platform :ios do
           }
         }
       )
+      build_args[:xcargs] = "DEVELOPMENT_TEAM=#{team_id}" unless team_id.empty?
+      build_app(**build_args)
     else
       team_id = ENV["APP_STORE_CONNECT_TEAM_ID"].to_s.strip
       xcargs = "-allowProvisioningUpdates"
