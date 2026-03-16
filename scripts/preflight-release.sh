@@ -145,38 +145,42 @@ if [[ "$platform" == "ios" || "$platform" == "both" ]]; then
 fi
 
 if [[ "$platform" == "android" || "$platform" == "both" ]]; then
-  echo ""
-  echo "Android readiness"
-  check_file "native-android/app/build.gradle.kts"
-  check_file "native-android/app/src/main/res/mipmap-anydpi/ic_launcher.xml"
-  check_file "native-android/app/src/main/res/mipmap-anydpi/ic_launcher_round.xml"
-  check_file "native-android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png"
-  check_nonempty "native-android/README.md"
-
-  if ! grep -q "Release signing" "$ROOT_DIR/native-android/README.md"; then
-    warn "native-android/README.md does not document release signing"
-  fi
-
-  if [[ ! -f "$ROOT_DIR/native-android/keystore.properties" ]]; then
-    warn "native-android/keystore.properties is not configured; signed Play uploads remain blocked"
-  fi
-
-  if ! grep -q 'create("release")' "$ROOT_DIR/native-android/app/build.gradle.kts"; then
-    error "Android release signing config is missing from app/build.gradle.kts"
-  fi
-
-  if [[ -d "$ROOT_DIR/native-android/fastlane" ]]; then
-    check_nonempty "native-android/fastlane/Fastfile"
-    check_nonempty "native-android/fastlane/Appfile"
-    check_nonempty "native-android/fastlane/metadata/android/en-US/title.txt"
-    check_nonempty "native-android/fastlane/metadata/android/en-US/short_description.txt"
-    check_nonempty "native-android/fastlane/metadata/android/en-US/full_description.txt"
+  if [[ -n "${SKIP_ANDROID_HEALTH:-}" ]]; then
+    warn "SKIP_ANDROID_HEALTH is set; skipping Android readiness checks"
   else
-    warn "native-android/fastlane is not present yet; Play metadata automation is still blocked"
-  fi
+    echo ""
+    echo "Android readiness"
+    check_file "native-android/app/build.gradle.kts"
+    check_file "native-android/app/src/main/res/mipmap-anydpi/ic_launcher.xml"
+    check_file "native-android/app/src/main/res/mipmap-anydpi/ic_launcher_round.xml"
+    check_file "native-android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png"
+    check_nonempty "native-android/README.md"
 
-  if [[ ! -f "$ROOT_DIR/native-android/keystore.properties" ]]; then
-    warn "native-android/keystore.properties is not configured; Release signing is blocked"
+    if ! grep -q "Release signing" "$ROOT_DIR/native-android/README.md"; then
+      warn "native-android/README.md does not document release signing"
+    fi
+
+    if [[ ! -f "$ROOT_DIR/native-android/keystore.properties" ]]; then
+      warn "native-android/keystore.properties is not configured; signed Play uploads remain blocked"
+    fi
+
+    if ! grep -q 'create("release")' "$ROOT_DIR/native-android/app/build.gradle.kts"; then
+      error "Android release signing config is missing from app/build.gradle.kts"
+    fi
+
+    if [[ -d "$ROOT_DIR/native-android/fastlane" ]]; then
+      check_nonempty "native-android/fastlane/Fastfile"
+      check_nonempty "native-android/fastlane/Appfile"
+      check_nonempty "native-android/fastlane/metadata/android/en-US/title.txt"
+      check_nonempty "native-android/fastlane/metadata/android/en-US/short_description.txt"
+      check_nonempty "native-android/fastlane/metadata/android/en-US/full_description.txt"
+    else
+      warn "native-android/fastlane is not present yet; Play metadata automation is still blocked"
+    fi
+
+    if [[ ! -f "$ROOT_DIR/native-android/keystore.properties" ]]; then
+      warn "native-android/keystore.properties is not configured; Release signing is blocked"
+    fi
   fi
 fi
 

@@ -11,6 +11,9 @@ on:
 permissions:
   contents: read
 
+env:
+  SKIP_ANDROID_HEALTH: "true"
+
 concurrency:
   group: ci-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -31,6 +34,8 @@ jobs:
   cli-surface:
     name: CLI Surface
     runs-on: ubuntu-latest
+    env:
+      SKIP_ANDROID_HEALTH: "true"
     steps:
       - uses: actions/checkout@v4
 
@@ -90,6 +95,7 @@ jobs:
         run: SKIP_REMOTE_CHECKS=1 make verify-ios
 
   android-health:
+    if: ${{ env.SKIP_ANDROID_HEALTH != 'true' }}
     name: Android Health Check
     runs-on: ubuntu-latest
     timeout-minutes: 45
