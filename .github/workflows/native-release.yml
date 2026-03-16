@@ -185,12 +185,12 @@ jobs:
 
       - name: Generate keystore properties
         run: |
-          cat <<'EOF' > native-android/keystore.properties
-storeFile=keystore.jks
-storePassword=$ANDROID_KEYSTORE_PASSWORD
-keyAlias=$ANDROID_KEY_ALIAS
-keyPassword=$ANDROID_KEY_PASSWORD
-EOF
+          {
+            echo "storeFile=keystore.jks"
+            echo "storePassword=$ANDROID_KEYSTORE_PASSWORD"
+            echo "keyAlias=$ANDROID_KEY_ALIAS"
+            echo "keyPassword=$ANDROID_KEY_PASSWORD"
+          } > native-android/keystore.properties
 
       - name: Decode Android keystore
         run: printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > native-android/keystore.jks
