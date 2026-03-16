@@ -71,30 +71,12 @@ jobs:
       - name: Run iOS release-readiness build
         run: SKIP_REMOTE_CHECKS=1 make verify-ios
 
-      - name: Validate signing repo access
-        env:
-          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
-          MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
-        run: |
-          if [[ -z "${MATCH_GIT_URL}" ]]; then
-            echo "Missing MATCH_GIT_URL secret" >&2
-            exit 1
-          fi
-          if [[ -n "${MATCH_GIT_BASIC_AUTHORIZATION}" ]]; then
-            git -c "http.extraheader=Authorization: Basic ${MATCH_GIT_BASIC_AUTHORIZATION}" ls-remote "${MATCH_GIT_URL}" >/dev/null
-          else
-            git ls-remote "${MATCH_GIT_URL}" >/dev/null
-          fi
-
       - name: Sync iOS signing assets
         working-directory: native-ios
         env:
           APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
           APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
           APPSTORE_PRIVATE_KEY_PATH: ${{ env.APPSTORE_PRIVATE_KEY_PATH }}
-          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
-          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
-          MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
           APP_STORE_APP_IDENTIFIER: com.rammyinn.saintcharbel
         run: bundle exec fastlane ios setup
 
@@ -104,9 +86,6 @@ jobs:
           APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
           APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
           APPSTORE_PRIVATE_KEY_PATH: ${{ env.APPSTORE_PRIVATE_KEY_PATH }}
-          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
-          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
-          MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
           APP_STORE_APP_IDENTIFIER: com.rammyinn.saintcharbel
         run: bundle exec fastlane ios beta
 
