@@ -107,6 +107,11 @@ make maestro-ios
 make maestro-android
 make playwright-verify-local
 make playwright-verify-strict
+make agent-browser-install
+make agent-browser-open-asc
+make agent-browser-open-play
+make agent-browser-state-save
+ANCHOR_API_KEY=... make anchor-smoke
 ```
 
 ### Other Useful Commands

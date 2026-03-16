@@ -42,3 +42,17 @@ make security-gitleaks
 - authenticated store-console browser checks
 
 Those items still require the credentials and store configuration listed in `docs/user-intervention-todo.md`.
+
+## Browser automation tooling
+
+For local store-console automation experiments, this repo now exposes optional `agent-browser` and Anchor entrypoints:
+
+```bash
+make agent-browser-install
+make agent-browser-open-asc
+make agent-browser-open-play
+make agent-browser-state-save
+ANCHOR_API_KEY=... make anchor-smoke
+```
+
+See `tests/playwright/README.md` for auth-state handling and task overrides.

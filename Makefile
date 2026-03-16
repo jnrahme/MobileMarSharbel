@@ -6,6 +6,7 @@
 .PHONY: run-ios-sim run-android-emulator run-android-device maestro-ios maestro-android
 .PHONY: remote-health remote-health-ios remote-health-android
 .PHONY: playwright-install playwright-verify-local playwright-verify-strict install-hooks gitleaks-install security-gitleaks print-blockers docs-site
+.PHONY: agent-browser-install agent-browser-open-asc agent-browser-open-play agent-browser-snapshot agent-browser-state-save anchor-smoke
 
 IOS_DIR := native-ios
 ANDROID_DIR := native-android
@@ -29,6 +30,11 @@ help:
 		'  make playwright-verify-strict Run the strict local Playwright release-readiness checks' \
 		'  make remote-health         Run full remote dependency checks on both native apps' \
 		'  make security-gitleaks     Install gitleaks if needed and run a repo secret scan' \
+		'  make agent-browser-install Install agent-browser and Anchor dependencies for store-console automation' \
+		'  make agent-browser-open-asc Open App Store Connect with agent-browser' \
+		'  make agent-browser-open-play Open Google Play Console with agent-browser' \
+		'  make agent-browser-state-save Save browser auth state to tests/playwright/.auth/store-auth.json' \
+		'  make anchor-smoke          Run a basic Anchor Browser API smoke task (requires ANCHOR_API_KEY)' \
 		'  make print-blockers        Print the manual follow-up checklist'
 
 verify: verify-repo verify-ios verify-android
@@ -101,6 +107,25 @@ playwright-verify-strict:
 	@cd $(PLAYWRIGHT_DIR) && npm ci && npm run verify:strict
 
 playwright-verify-local: verify-playwright
+
+agent-browser-install:
+	@cd $(PLAYWRIGHT_DIR) && npm install
+	@cd $(PLAYWRIGHT_DIR) && npx agent-browser install
+
+agent-browser-open-asc:
+	@cd $(PLAYWRIGHT_DIR) && npm run agent:open:asc
+
+agent-browser-open-play:
+	@cd $(PLAYWRIGHT_DIR) && npm run agent:open:play
+
+agent-browser-snapshot:
+	@cd $(PLAYWRIGHT_DIR) && npm run agent:snapshot
+
+agent-browser-state-save:
+	@cd $(PLAYWRIGHT_DIR) && npm run agent:state:save
+
+anchor-smoke:
+	@cd $(PLAYWRIGHT_DIR) && npm run anchor:smoke
 
 install-hooks:
 	@bash scripts/install-hooks.sh
