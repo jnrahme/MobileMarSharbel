@@ -1,0 +1,50 @@
+default_platform(:android)
+
+platform :android do
+  def project_root
+    File.expand_path('..', __dir__)
+  end
+
+  def json_key_path
+    json = ENV['GOOGLE_PLAY_JSON_KEY']
+    return nil if json.nil? || json.empty?
+    path = File.join(Dir.tmpdir, 'play-service-account.json')
+    File.write(path, json)
+    path
+  end
+
+  desc 'Sync Play metadata'
+  lane :metadata do
+    key_path = json_key_path
+    upload_to_play_store(
+      package_name: 'com.rammyinn.saintcharbel',
+      metadata_path: File.join(project_root, 'metadata/android/en-US'),
+      json_key: key_path,
+      skip_upload_images: false,
+      skip_upload_screenshots: false,
+      skip_upload_changelogs: false,
+      skip_upload_apk: true,
+      skip_upload_aab: true
+    )
+  end
+
+  desc 'Build release bundle'
+  lane :bundle_release do
+    gradle(task: 'bundleRelease', project_dir: File.join(project_root, '..', 'native-android'))
+  end
+
+  desc 'Upload release AAB to internal track'
+  lane :release do
+    bundle_release
+    upload_to_play_store(
+      package_name: 'com.rammyinn.saintcharbel',
+      track: 'internal',
+      aab: File.join(project_root, '..', 'native-android', 'app', 'build', 'outputs', 'bundle', 'release', 'app-release.aab'),
+      json_key: json_key_path,
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+      skip_upload_changelogs: true
+    )
+  end
+end

@@ -38,7 +38,7 @@ make security-gitleaks
 
 - fully trusted Apple signing state until `fastlane match` has created the first distribution certificate and provisioning profile
 - Google Play publishing automation
-- polished screenshot inventory and App Review-ready final listing copy
+- Android metadata sync and Play release lanes (keystore + service account needed)
 - authenticated store-console browser checks
 
 Those items still require the credentials and store configuration listed in `docs/user-intervention-todo.md`.

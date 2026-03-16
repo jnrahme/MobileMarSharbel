@@ -137,6 +137,13 @@ jobs:
     timeout-minutes: 45
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+      GOOGLE_PLAY_JSON_KEY: ${{ secrets.GOOGLE_PLAY_JSON_KEY }}
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - uses: actions/checkout@v4
 
@@ -160,6 +167,50 @@ jobs:
 
       - name: Run Android release-readiness build
         run: SKIP_REMOTE_CHECKS=1 make verify-android
+
+      - name: Setup Ruby for Android fastlane
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+          bundler-cache: true
+          working-directory: native-android
+
+      - name: Install Android Ruby gems
+        working-directory: native-android
+        run: bundle install
+
+      - name: Ensure Play service account secret
+        run: test -n "$GOOGLE_PLAY_JSON_KEY"
+
+      - name: Decode Play service account
+        run: printf '%s' "$GOOGLE_PLAY_JSON_KEY" > /tmp/play-service-account.json
+
+      - name: Generate keystore properties
+        run: |
+          cat <<'EOF' > native-android/keystore.properties
+storeFile=keystore.jks
+storePassword=$ANDROID_KEYSTORE_PASSWORD
+keyAlias=$ANDROID_KEY_ALIAS
+keyPassword=$ANDROID_KEY_PASSWORD
+EOF
+
+      - name: Decode Android keystore
+        run: printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > native-android/keystore.jks
+
+      - name: Sync Android metadata
+        working-directory: native-android
+        run: bundle exec fastlane android metadata
+        env:
+          GOOGLE_PLAY_JSON_KEY: ${{ secrets.GOOGLE_PLAY_JSON_KEY }}
+
+      - name: Upload Android release
+        working-directory: native-android
+        run: bundle exec fastlane android release
+        env:
+          GOOGLE_PLAY_JSON_KEY: ${{ secrets.GOOGLE_PLAY_JSON_KEY }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
 
       - name: Upload Android debug APK
         uses: actions/upload-artifact@v4

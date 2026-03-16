@@ -38,6 +38,8 @@ Optional later:
 - Android signing assets
 - Apple Developer Program permissions needed for `fastlane match` to create certificates and provisioning profiles
 - Replace the bootstrap `MATCH_GIT_BASIC_AUTHORIZATION` secret with a dedicated fine-grained GitHub token if you do not want CI using the current personal token
+- The Play Console service-account JSON and release keystore secrets:
+  `GOOGLE_PLAY_JSON_KEY`, `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`
 
 ## 5. Approve later automation only when ready
 
