@@ -129,9 +129,13 @@ platform :ios do
         }
       )
     else
+      team_id = ENV["APP_STORE_CONNECT_TEAM_ID"].to_s.strip
+      xcargs = "-allowProvisioningUpdates"
+      xcargs += " DEVELOPMENT_TEAM=#{team_id}" unless team_id.empty?
+
       build_app(
         **common_args,
-        xcargs: "-allowProvisioningUpdates"
+        xcargs: xcargs
       )
     end
   end
