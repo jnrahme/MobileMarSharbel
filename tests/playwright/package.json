@@ -2,6 +2,9 @@
   "name": "mobiletest-root-playwright",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=25.8.1 <26"
+  },
   "scripts": {
     "test:local": "playwright test specs/local --project=local-checks",
     "test:local:strict": "STRICT_STORE_READINESS=1 playwright test specs/local --project=local-checks",

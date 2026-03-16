@@ -12,6 +12,7 @@ added only after:
 ## Install
 
 ```bash
+nvm use
 cd tests/playwright
 npm ci
 ```
