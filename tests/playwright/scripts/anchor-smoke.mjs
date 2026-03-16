@@ -8,17 +8,32 @@ if (!apiKey) {
   process.exit(1);
 }
 
-const task =
-  process.env.ANCHOR_SMOKE_TASK ||
-  "Open https://example.com and report the page title.";
-
 async function run() {
-  const anchor = new AnchorBrowser({
+  const client = new AnchorBrowser({
     apiKey
   });
 
-  const result = await anchor.agent().task(task);
-  console.log(JSON.stringify(result, null, 2));
+  // Minimal API smoke check: create and delete a browser session.
+  const created = await client.sessions.create({ session: { recording: { active: false } } });
+  const sessionId = created?.data?.id;
+
+  if (!sessionId) {
+    throw new Error("Anchor smoke failed: session id missing from create response.");
+  }
+
+  await client.sessions.delete(sessionId);
+
+  console.log(
+    JSON.stringify(
+      {
+        ok: true,
+        sessionId,
+        message: "Anchor API key is valid and session lifecycle works."
+      },
+      null,
+      2
+    )
+  );
 }
 
 run().catch((error) => {
