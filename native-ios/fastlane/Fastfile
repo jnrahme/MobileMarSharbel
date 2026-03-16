@@ -55,13 +55,18 @@ platform :ios do
   def install_match_signing(api_key:, readonly:)
     return nil unless ENV["MATCH_GIT_URL"]
 
-    match(
+    match_options = {
       type: "appstore",
       app_identifier: [app_identifier_value],
       readonly: readonly,
       api_key: api_key,
       git_url: ENV["MATCH_GIT_URL"]
-    )
+    }
+
+    basic_auth = ENV["MATCH_GIT_BASIC_AUTHORIZATION"].to_s.strip
+    match_options[:git_basic_authorization] = basic_auth unless basic_auth.empty?
+
+    match(**match_options)
 
     ENV["sigh_#{app_identifier_value}_appstore_profile-name"] ||
       "match AppStore #{app_identifier_value}"

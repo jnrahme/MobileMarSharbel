@@ -77,7 +77,11 @@ jobs:
           APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
           APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
           APPSTORE_PRIVATE_KEY_PATH: ${{ env.APPSTORE_PRIVATE_KEY_PATH }}
+          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
           APP_STORE_CONNECT_TEAM_ID: ${{ secrets.APP_STORE_CONNECT_TEAM_ID }}
+          APPLE_DEVELOPER_TEAM_ID: ${{ secrets.APP_STORE_CONNECT_TEAM_ID }}
           APP_STORE_APP_IDENTIFIER: com.rammyinn.saintcharbel
         run: bundle exec fastlane ios setup
 
@@ -87,7 +91,11 @@ jobs:
           APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
           APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
           APPSTORE_PRIVATE_KEY_PATH: ${{ env.APPSTORE_PRIVATE_KEY_PATH }}
+          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
           APP_STORE_CONNECT_TEAM_ID: ${{ secrets.APP_STORE_CONNECT_TEAM_ID }}
+          APPLE_DEVELOPER_TEAM_ID: ${{ secrets.APP_STORE_CONNECT_TEAM_ID }}
           APP_STORE_APP_IDENTIFIER: com.rammyinn.saintcharbel
         run: bundle exec fastlane ios beta
 
