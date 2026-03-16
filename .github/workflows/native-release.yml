@@ -69,6 +69,11 @@ jobs:
         with:
           ruby-version: "3.2"
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
       - name: Install iOS Ruby gems
         working-directory: native-ios
         run: bundle install
@@ -85,6 +90,35 @@ jobs:
 
       - name: Run iOS release preflight
         run: bash scripts/preflight-release.sh --platform ios --layer 1
+
+      - name: Verify App Store Connect API access
+        env:
+          APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+          APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+          APPSTORE_PRIVATE_KEY_PATH: ${{ env.APPSTORE_PRIVATE_KEY_PATH }}
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pyjwt==2.10.1 cryptography==44.0.1 requests==2.32.3
+          python scripts/check_store_access.py --platform ios --ios-bundle-id com.rammyinn.saintcharbel
+
+      - name: Select Xcode
+        run: |
+          set -euo pipefail
+          XCODE_PATH=""
+          while IFS= read -r candidate; do
+            if DEVELOPER_DIR="${candidate}/Contents/Developer" xcodebuild -version >/dev/null 2>&1; then
+              XCODE_PATH="${candidate}"
+              break
+            fi
+          done < <(ls -d /Applications/Xcode*.app 2>/dev/null | sort -V -r)
+
+          if [ -z "${XCODE_PATH}" ]; then
+            echo "No Xcode installation found."
+            exit 1
+          fi
+
+          echo "Using Xcode at: ${XCODE_PATH}"
+          sudo xcode-select -s "${XCODE_PATH}/Contents/Developer"
 
       - name: Show Xcode version
         run: xcodebuild -version
@@ -165,6 +199,17 @@ jobs:
           name: ios-ipa-${{ steps.meta.outputs.label }}
           path: native-ios/build/SaintCharbelApp.ipa
           if-no-files-found: error
+
+      - name: Upload iOS failure diagnostics
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-failure-diagnostics-${{ github.run_number }}
+          path: |
+            /Users/runner/Library/Logs/gym
+            native-ios/build/**/*.xcresult
+            native-ios/fastlane/report.xml
+          if-no-files-found: warn
 
   android-artifacts:
     name: Android Artifacts
