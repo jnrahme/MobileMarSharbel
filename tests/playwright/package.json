@@ -15,7 +15,7 @@
     "agent:open:asc": "agent-browser open https://appstoreconnect.apple.com",
     "agent:open:play": "agent-browser open https://play.google.com/console",
     "agent:snapshot": "agent-browser snapshot -i",
-    "agent:state:save": "mkdir -p .auth && agent-browser --auto-connect state save .auth/store-auth.json",
+    "agent:state:save": "mkdir -p .auth && (agent-browser --auto-connect state save .auth/store-auth.json || agent-browser state save .auth/store-auth.json)",
     "anchor:smoke": "node scripts/anchor-smoke.mjs"
   },
   "devDependencies": {
