@@ -14,9 +14,12 @@ on:
           - both
       submit_review:
         description: "For iOS only: submit the latest uploaded build for App Review"
-        type: boolean
+        type: choice
         required: true
-        default: false
+        default: "false"
+        options:
+          - "false"
+          - "true"
       artifact_label:
         description: "Optional artifact label"
         required: false
@@ -39,6 +42,24 @@ jobs:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - uses: actions/checkout@v4
+
+      - name: Fail fast on required iOS release secrets
+        env:
+          APPSTORE_PRIVATE_KEY: ${{ secrets.APPSTORE_PRIVATE_KEY }}
+          APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+          APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+          APP_STORE_CONNECT_TEAM_ID: ${{ secrets.APP_STORE_CONNECT_TEAM_ID }}
+          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
+        run: |
+          set -euo pipefail
+          for name in APPSTORE_PRIVATE_KEY APPSTORE_KEY_ID APPSTORE_ISSUER_ID APP_STORE_CONNECT_TEAM_ID MATCH_GIT_URL MATCH_PASSWORD MATCH_GIT_BASIC_AUTHORIZATION; do
+            if [ -z "${!name:-}" ]; then
+              echo "Missing required secret: $name"
+              exit 1
+            fi
+          done
 
       - name: Make scripts executable
         run: chmod +x scripts/*.sh native-ios/scripts/healthcheck.sh
@@ -71,6 +92,14 @@ jobs:
       - name: Run iOS release-readiness build
         run: SKIP_REMOTE_CHECKS=1 make verify-ios
 
+      - name: Configure git credentials for match
+        env:
+          MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
+        run: |
+          set -euo pipefail
+          decoded="$(printf '%s' "$MATCH_GIT_BASIC_AUTHORIZATION" | base64 --decode)"
+          git config --global url."https://${decoded}@github.com/".insteadOf "https://github.com/"
+
       - name: Sync iOS signing assets
         working-directory: native-ios
         env:
@@ -100,7 +129,7 @@ jobs:
         run: bundle exec fastlane ios beta
 
       - name: Upload iOS metadata
-        if: ${{ inputs.submit_review }}
+        if: ${{ inputs.submit_review == 'true' }}
         working-directory: native-ios
         env:
           APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
@@ -111,7 +140,7 @@ jobs:
         run: bundle exec fastlane ios metadata
 
       - name: Submit iOS build for review
-        if: ${{ inputs.submit_review }}
+        if: ${{ inputs.submit_review == 'true' }}
         working-directory: native-ios
         env:
           APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
