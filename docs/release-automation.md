@@ -32,12 +32,13 @@ make security-gitleaks
 - bootstrapped `gitleaks` install so the secret-scan command works on a fresh machine
 - read-only `scripts/check_store_access.py` plumbing for official App Store Connect and Google Play credential checks
 - `scripts/validate_release_branch.py` plus `.github/workflows/enforce-develop-to-main.yml` for main-promotion policy enforcement
+- iOS `fastlane match` storage, TestFlight upload lanes, and App Store metadata scaffolding
 
 ## What is intentionally still blocked
 
-- App Store Connect upload automation
+- fully trusted Apple signing state until `fastlane match` has created the first distribution certificate and provisioning profile
 - Google Play publishing automation
-- Fastlane metadata sync and screenshot inventory
+- polished screenshot inventory and App Review-ready final listing copy
 - authenticated store-console browser checks
 
 Those items still require the credentials and store configuration listed in `docs/user-intervention-todo.md`.

@@ -22,6 +22,7 @@ Optional later:
 
 - Playwright auth-state secrets for store-console checks
 - analytics / crash reporting credentials
+- `MATCH_GIT_URL`, `MATCH_PASSWORD`, and `MATCH_GIT_BASIC_AUTHORIZATION` are now configured for GitHub Actions signing storage
 
 ## 3. Configure GitHub settings
 
@@ -35,7 +36,8 @@ Optional later:
 - App Store Connect access
 - Google Play Console access
 - Android signing assets
-- Apple signing / provisioning strategy
+- Apple Developer Program permissions needed for `fastlane match` to create certificates and provisioning profiles
+- Replace the bootstrap `MATCH_GIT_BASIC_AUTHORIZATION` secret with a dedicated fine-grained GitHub token if you do not want CI using the current personal token
 
 ## 5. Approve later automation only when ready
 

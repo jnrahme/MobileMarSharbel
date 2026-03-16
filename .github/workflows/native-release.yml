@@ -12,13 +12,18 @@ on:
           - ios
           - android
           - both
+      submit_review:
+        description: "For iOS only: submit the latest uploaded build for App Review"
+        type: boolean
+        required: true
+        default: false
       artifact_label:
         description: "Optional artifact label"
         required: false
         type: string
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: native-release-${{ github.ref_name }}-${{ inputs.platform || 'both' }}
@@ -26,7 +31,7 @@ concurrency:
 
 jobs:
   ios-artifacts:
-    name: iOS Artifacts
+    name: iOS Release
     if: ${{ inputs.platform == 'ios' || inputs.platform == 'both' }}
     runs-on: macos-15
     timeout-minutes: 45
@@ -35,6 +40,24 @@ jobs:
 
       - name: Make scripts executable
         run: chmod +x scripts/*.sh native-ios/scripts/healthcheck.sh
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+
+      - name: Install iOS Ruby gems
+        working-directory: native-ios
+        run: bundle install
+
+      - name: Prepare App Store Connect API key
+        env:
+          APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+          APPSTORE_PRIVATE_KEY: ${{ secrets.APPSTORE_PRIVATE_KEY }}
+        run: |
+          mkdir -p "$HOME/.appstoreconnect/private_keys"
+          printf '%s' "$APPSTORE_PRIVATE_KEY" > "$HOME/.appstoreconnect/private_keys/AuthKey_${APPSTORE_KEY_ID}.p8"
+          chmod 600 "$HOME/.appstoreconnect/private_keys/AuthKey_${APPSTORE_KEY_ID}.p8"
 
       - name: Run iOS release preflight
         run: bash scripts/preflight-release.sh --platform ios --layer 1
@@ -45,6 +68,50 @@ jobs:
       - name: Run iOS release-readiness build
         run: SKIP_REMOTE_CHECKS=1 make verify-ios
 
+      - name: Sync iOS signing assets
+        working-directory: native-ios
+        env:
+          APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+          APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+          APPSTORE_PRIVATE_KEY_PATH: ${{ runner.home }}/.appstoreconnect/private_keys/AuthKey_${{ secrets.APPSTORE_KEY_ID }}.p8
+          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
+          APP_STORE_APP_IDENTIFIER: com.rammyinn.saintcharbel
+        run: bundle exec fastlane ios setup
+
+      - name: Upload iOS build to TestFlight
+        working-directory: native-ios
+        env:
+          APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+          APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+          APPSTORE_PRIVATE_KEY_PATH: ${{ runner.home }}/.appstoreconnect/private_keys/AuthKey_${{ secrets.APPSTORE_KEY_ID }}.p8
+          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
+          APP_STORE_APP_IDENTIFIER: com.rammyinn.saintcharbel
+        run: bundle exec fastlane ios beta
+
+      - name: Upload iOS metadata
+        if: ${{ inputs.submit_review }}
+        working-directory: native-ios
+        env:
+          APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+          APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+          APPSTORE_PRIVATE_KEY_PATH: ${{ runner.home }}/.appstoreconnect/private_keys/AuthKey_${{ secrets.APPSTORE_KEY_ID }}.p8
+          APP_STORE_APP_IDENTIFIER: com.rammyinn.saintcharbel
+        run: bundle exec fastlane ios metadata
+
+      - name: Submit iOS build for review
+        if: ${{ inputs.submit_review }}
+        working-directory: native-ios
+        env:
+          APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+          APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+          APPSTORE_PRIVATE_KEY_PATH: ${{ runner.home }}/.appstoreconnect/private_keys/AuthKey_${{ secrets.APPSTORE_KEY_ID }}.p8
+          APP_STORE_APP_IDENTIFIER: com.rammyinn.saintcharbel
+        run: bundle exec fastlane ios submit_review
+
       - name: Resolve artifact label
         id: meta
         env:
@@ -54,14 +121,12 @@ jobs:
           label="${label//\//-}"
           echo "label=$label" >> "$GITHUB_OUTPUT"
 
-      - name: Zip iOS source snapshot
-        run: ditto -c -k --keepParent native-ios "native-ios-${{ steps.meta.outputs.label }}.zip"
-
-      - name: Upload iOS snapshot
+      - name: Upload iOS IPA
         uses: actions/upload-artifact@v4
         with:
-          name: ios-source-snapshot
-          path: native-ios-${{ steps.meta.outputs.label }}.zip
+          name: ios-ipa-${{ steps.meta.outputs.label }}
+          path: native-ios/build/SaintCharbelApp.ipa
+          if-no-files-found: error
 
   android-artifacts:
     name: Android Artifacts

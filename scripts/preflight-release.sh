@@ -116,6 +116,16 @@ if [[ "$platform" == "ios" || "$platform" == "both" ]]; then
   check_nonempty "native-ios/SaintCharbelApp/Assets.xcassets/AppIcon.appiconset/Contents.json"
   check_file "native-ios/SaintCharbelApp/Assets.xcassets/AppIcon.appiconset/icon-1024-marketing.png"
   check_nonempty "native-ios/README.md"
+  check_nonempty "native-ios/fastlane/Fastfile"
+  check_nonempty "native-ios/fastlane/Appfile"
+  check_nonempty "native-ios/fastlane/Matchfile"
+  check_nonempty "native-ios/fastlane/metadata/en-US/name.txt"
+  check_nonempty "native-ios/fastlane/metadata/en-US/subtitle.txt"
+  check_nonempty "native-ios/fastlane/metadata/en-US/description.txt"
+  check_nonempty "native-ios/fastlane/metadata/en-US/keywords.txt"
+  check_nonempty "native-ios/fastlane/metadata/en-US/release_notes.txt"
+  check_nonempty "native-ios/fastlane/metadata/en-US/privacy_url.txt"
+  check_nonempty "native-ios/fastlane/metadata/en-US/support_url.txt"
 
   if command -v plutil >/dev/null 2>&1; then
     if ! plutil -lint "$ROOT_DIR/native-ios/SaintCharbelApp/PrivacyInfo.xcprivacy" >/dev/null; then
@@ -129,8 +139,8 @@ if [[ "$platform" == "ios" || "$platform" == "both" ]]; then
     warn "native-ios/README.md does not list Apple-side delivery steps"
   fi
 
-  if [[ ! -d "$ROOT_DIR/native-ios/fastlane" ]]; then
-    warn "native-ios/fastlane is not present yet; App Store metadata automation is still blocked"
+  if [[ ! -d "$ROOT_DIR/native-ios/fastlane/screenshots/en-US" ]]; then
+    warn "native-ios/fastlane/screenshots/en-US is missing; automated screenshot upload remains blocked"
   fi
 fi
 
