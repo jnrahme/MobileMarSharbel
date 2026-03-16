@@ -144,10 +144,10 @@ if [[ "$platform" == "ios" || "$platform" == "both" ]]; then
   fi
 fi
 
-  if [[ "$platform" == "android" || "$platform" == "both" ]]; then
-    echo ""
-    echo "Android readiness"
-    check_file "native-android/app/build.gradle.kts"
+if [[ "$platform" == "android" || "$platform" == "both" ]]; then
+  echo ""
+  echo "Android readiness"
+  check_file "native-android/app/build.gradle.kts"
   check_file "native-android/app/src/main/res/mipmap-anydpi/ic_launcher.xml"
   check_file "native-android/app/src/main/res/mipmap-anydpi/ic_launcher_round.xml"
   check_file "native-android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png"
@@ -177,7 +177,6 @@ fi
 
   if [[ ! -f "$ROOT_DIR/native-android/keystore.properties" ]]; then
     warn "native-android/keystore.properties is not configured; Release signing is blocked"
-  fi
   fi
 fi
 
