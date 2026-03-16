@@ -35,6 +35,8 @@ jobs:
     if: ${{ inputs.platform == 'ios' || inputs.platform == 'both' }}
     runs-on: macos-15
     timeout-minutes: 45
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - uses: actions/checkout@v4
 
@@ -133,6 +135,8 @@ jobs:
     if: ${{ inputs.platform == 'android' || inputs.platform == 'both' }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - uses: actions/checkout@v4
 
