@@ -15,13 +15,37 @@ For _fastlane_ installation instructions, see [Installing _fastlane_](https://do
 
 ## iOS
 
+### ios verify
+
+```sh
+[bundle exec] fastlane ios verify
+```
+
+Run the same iOS verification path used by root automation
+
+### ios setup
+
+```sh
+[bundle exec] fastlane ios setup
+```
+
+Create or repair App Store certificates and provisioning profiles
+
+### ios build_release
+
+```sh
+[bundle exec] fastlane ios build_release
+```
+
+Build a signed archive for TestFlight/App Store delivery
+
 ### ios release_build
 
 ```sh
 [bundle exec] fastlane ios release_build
 ```
 
-Create a signed local release archive/IPA
+Backward-compatible alias for `ios build_release`
 
 ### ios beta
 
@@ -29,7 +53,7 @@ Create a signed local release archive/IPA
 [bundle exec] fastlane ios beta
 ```
 
-Build and upload the current release to TestFlight
+Upload the latest build to TestFlight after the archive succeeds
 
 ### ios create_app
 
@@ -37,7 +61,7 @@ Build and upload the current release to TestFlight
 [bundle exec] fastlane ios create_app
 ```
 
-Create the App Store Connect app record
+Create the app in App Store Connect if it does not exist yet
 
 ### ios metadata
 
@@ -45,7 +69,7 @@ Create the App Store Connect app record
 [bundle exec] fastlane ios metadata
 ```
 
-Upload localized metadata and screenshots
+Upload App Store metadata and screenshots without binary upload
 
 ### ios submit_review
 
@@ -53,7 +77,7 @@ Upload localized metadata and screenshots
 [bundle exec] fastlane ios submit_review
 ```
 
-Submit the selected version for App Review
+Submit the latest processed build for App Review
 
 ----
 

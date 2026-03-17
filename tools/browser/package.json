@@ -1,0 +1,13 @@
+{
+  "name": "mobilemarsharbel-browser-tools",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "anchor:session": "node ./anchor-session.mjs",
+    "agent:install": "agent-browser install",
+    "agent:snapshot": "agent-browser open https://example.com && agent-browser snapshot -i"
+  },
+  "dependencies": {
+    "anchorbrowser": "^0.16.2"
+  }
+}

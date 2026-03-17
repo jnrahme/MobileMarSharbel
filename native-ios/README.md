@@ -24,6 +24,8 @@ This repository contains the iOS app source, release automation, and delivery ch
   - Xcode project configuration
 - `.github/workflows/`
   - CI health check and manual release workflow
+- `fastlane/`
+  - Apple delivery lanes for verification, `match` signing, archive creation, TestFlight upload, and metadata sync
 - `scripts/healthcheck.sh`
   - single-entry validation script for local and CI use
 - `docs/plans/`
@@ -119,6 +121,37 @@ The repository now includes baseline App Store submission readiness work:
 - non-exempt encryption declaration in project settings
 - app icon asset catalog configured in the Xcode target
 - release workflow and repeatable health check
+- Fastlane lanes for TestFlight and metadata delivery
+
+## Fastlane
+
+Install the Ruby dependencies:
+
+```bash
+bundle install
+```
+
+Common Apple delivery commands:
+
+```bash
+bundle exec fastlane ios verify
+bundle exec fastlane ios build_release
+bundle exec fastlane ios beta
+bundle exec fastlane ios metadata
+```
+
+Configure the required environment variables before using signed delivery lanes:
+
+- `APPLE_DEVELOPER_TEAM_ID`
+- `APP_STORE_CONNECT_TEAM_ID`
+- `APP_STORE_CONNECT_APPLE_ID`
+- `APP_STORE_APP_IDENTIFIER`
+- `FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD` when using Apple ID auth
+- `MATCH_GIT_URL`
+- `MATCH_PASSWORD`
+- `MATCH_GIT_BASIC_AUTHORIZATION`
+
+GitHub Actions now uses the same `match` flow for deterministic signing on clean macOS runners.
 
 ## Remaining Apple-Side Delivery Steps
 

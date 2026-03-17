@@ -7,6 +7,7 @@
 .PHONY: remote-health remote-health-ios remote-health-android
 .PHONY: playwright-install playwright-verify-local playwright-verify-strict install-hooks gitleaks-install security-gitleaks print-blockers docs-site
 .PHONY: ios-store-assets ios-metadata-sync ios-testflight ios-release-build ios-asc-ready ios-submit-review ios-submit-review-dry ios-asc-poll
+.PHONY: agent-browser-install agent-browser-open-asc agent-browser-open-play agent-browser-snapshot agent-browser-state-save anchor-smoke
 
 IOS_DIR := native-ios
 ANDROID_DIR := native-android
@@ -19,25 +20,32 @@ help:
 		'  make verify                 Run repo + iOS + Android verification' \
 		'  make verify-full            Run verification, CLI smoke checks, and Playwright local checks' \
 		'  make preflight-release      Run Random-Timer-style release readiness checks (layer 1)' \
-		'  make store-access-check    Validate configured App Store / Play API credentials' \
+		'  make store-access-check     Validate configured App Store / Play API credentials' \
 		'  make hygiene-check          Run repo hygiene checks' \
-		'  make cli-smoke             Validate the root command surface' \
-		'  make run-ios-sim           Build, install, and launch the iOS app on a simulator' \
-		'  make run-android-emulator  Build, install, and launch Android on an emulator' \
-		'  make run-android-device    Build, install, and launch Android on a connected device' \
-		'  make maestro-ios           Run the iOS Maestro smoke flow' \
-		'  make maestro-android       Run the Android Maestro smoke flow' \
-		'  make ios-store-assets      Export App Store screenshot assets into native-ios/fastlane/screenshots' \
-		'  make ios-metadata-sync     Upload iOS App Store metadata and screenshots via fastlane' \
-		'  make ios-release-build     Create a signed local iOS release archive/IPA via fastlane' \
-		'  make ios-testflight        Build and upload the iOS app to TestFlight via fastlane' \
-		'  make ios-asc-ready         Verify App Store Connect submission readiness via API' \
-		'  make ios-submit-review-dry Sync assets, upload metadata, and run ASC readiness without submitting' \
-		'  make ios-submit-review     Run the full iOS submit-for-review CLI flow' \
+		'  make cli-smoke              Validate the root command surface' \
+		'  make run-ios-sim            Build, install, and launch the iOS app on a simulator' \
+		'  make run-android-emulator   Build, install, and launch Android on an emulator' \
+		'  make run-android-device     Build, install, and launch Android on a connected device' \
+		'  make maestro-ios            Run the iOS Maestro smoke flow' \
+		'  make maestro-android        Run the Android Maestro smoke flow' \
+		'  make ios-store-assets       Export App Store screenshot assets into native-ios/fastlane/screenshots' \
+		'  make ios-metadata-sync      Upload iOS App Store metadata and screenshots via fastlane' \
+		'  make ios-release-build      Create a signed local iOS release archive/IPA via fastlane' \
+		'  make ios-testflight         Build and upload the iOS app to TestFlight via fastlane' \
+		'  make ios-asc-ready          Verify App Store Connect submission readiness via API' \
+		'  make ios-asc-poll           Poll App Store Connect version state (set IOS_WAIT=1 to wait)' \
+		'  make ios-submit-review-dry  Sync assets, upload metadata, and run ASC readiness without submitting' \
+		'  make ios-submit-review      Run the full iOS submit-for-review CLI flow' \
 		'  make playwright-verify-strict Run the strict local Playwright release-readiness checks' \
-		'  make remote-health         Run full remote dependency checks on both native apps' \
-		'  make security-gitleaks     Install gitleaks if needed and run a repo secret scan' \
-		'  make print-blockers        Print the manual follow-up checklist'
+		'  make remote-health          Run full remote dependency checks on both native apps' \
+		'  make security-gitleaks      Install gitleaks if needed and run a repo secret scan' \
+		'  make agent-browser-install  Install agent-browser and Anchor dependencies for store-console automation' \
+		'  make agent-browser-open-asc Open App Store Connect with agent-browser' \
+		'  make agent-browser-open-play Open Google Play Console with agent-browser' \
+		'  make agent-browser-snapshot Capture a browser snapshot via agent-browser' \
+		'  make agent-browser-state-save Save browser auth state to tests/playwright/.auth/store-auth.json' \
+		'  make anchor-smoke           Run a basic Anchor Browser API smoke task (requires ANCHOR_API_KEY)' \
+		'  make print-blockers         Print the manual follow-up checklist'
 
 verify: verify-repo verify-ios verify-android
 
@@ -102,7 +110,7 @@ ios-metadata-sync: ios-store-assets
 	fi
 
 ios-release-build:
-	@bash scripts/ios-fastlane.sh ios release_build
+	@bash scripts/ios-fastlane.sh ios build_release
 
 ios-testflight:
 	@bash scripts/ios-fastlane.sh ios beta
@@ -169,6 +177,25 @@ playwright-verify-strict:
 	@cd $(PLAYWRIGHT_DIR) && npm ci && npm run verify:strict
 
 playwright-verify-local: verify-playwright
+
+agent-browser-install:
+	@cd $(PLAYWRIGHT_DIR) && npm install
+	@cd $(PLAYWRIGHT_DIR) && npx agent-browser install
+
+agent-browser-open-asc:
+	@cd $(PLAYWRIGHT_DIR) && npm run agent:open:asc
+
+agent-browser-open-play:
+	@cd $(PLAYWRIGHT_DIR) && npm run agent:open:play
+
+agent-browser-snapshot:
+	@cd $(PLAYWRIGHT_DIR) && npm run agent:snapshot
+
+agent-browser-state-save:
+	@cd $(PLAYWRIGHT_DIR) && npm run agent:state:save
+
+anchor-smoke:
+	@cd $(PLAYWRIGHT_DIR) && npm run anchor:smoke
 
 install-hooks:
 	@bash scripts/install-hooks.sh

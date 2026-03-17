@@ -2,15 +2,26 @@
   "name": "mobiletest-root-playwright",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=25.8.1 <26"
+  },
   "scripts": {
     "test:local": "playwright test specs/local --project=local-checks",
     "test:local:strict": "STRICT_STORE_READINESS=1 playwright test specs/local --project=local-checks",
     "verify": "npm run test:local",
     "verify:strict": "npm run test:local:strict",
-    "install:browsers": "playwright install --with-deps chromium"
+    "install:browsers": "playwright install --with-deps chromium",
+    "agent:install": "agent-browser install",
+    "agent:open:asc": "agent-browser open https://appstoreconnect.apple.com",
+    "agent:open:play": "agent-browser open https://play.google.com/console",
+    "agent:snapshot": "agent-browser snapshot -i",
+    "agent:state:save": "mkdir -p .auth && (agent-browser --auto-connect state save .auth/store-auth.json || agent-browser state save .auth/store-auth.json)",
+    "anchor:smoke": "node scripts/anchor-smoke.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.1",
+    "agent-browser": "^0.20.13",
+    "anchorbrowser": "^0.16.2",
     "typescript": "^5.9.3"
   }
 }

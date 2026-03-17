@@ -116,6 +116,16 @@ if [[ "$platform" == "ios" || "$platform" == "both" ]]; then
   check_nonempty "native-ios/SaintCharbelApp/Assets.xcassets/AppIcon.appiconset/Contents.json"
   check_file "native-ios/SaintCharbelApp/Assets.xcassets/AppIcon.appiconset/icon-1024-marketing.png"
   check_nonempty "native-ios/README.md"
+  check_nonempty "native-ios/fastlane/Fastfile"
+  check_nonempty "native-ios/fastlane/Appfile"
+  check_nonempty "native-ios/fastlane/Matchfile"
+  check_nonempty "native-ios/fastlane/metadata/en-US/name.txt"
+  check_nonempty "native-ios/fastlane/metadata/en-US/subtitle.txt"
+  check_nonempty "native-ios/fastlane/metadata/en-US/description.txt"
+  check_nonempty "native-ios/fastlane/metadata/en-US/keywords.txt"
+  check_nonempty "native-ios/fastlane/metadata/en-US/release_notes.txt"
+  check_nonempty "native-ios/fastlane/metadata/en-US/privacy_url.txt"
+  check_nonempty "native-ios/fastlane/metadata/en-US/support_url.txt"
 
   if command -v plutil >/dev/null 2>&1; then
     if ! plutil -lint "$ROOT_DIR/native-ios/SaintCharbelApp/PrivacyInfo.xcprivacy" >/dev/null; then
@@ -129,34 +139,48 @@ if [[ "$platform" == "ios" || "$platform" == "both" ]]; then
     warn "native-ios/README.md does not list Apple-side delivery steps"
   fi
 
-  if [[ ! -d "$ROOT_DIR/native-ios/fastlane" ]]; then
-    warn "native-ios/fastlane is not present yet; App Store metadata automation is still blocked"
+  if [[ ! -d "$ROOT_DIR/native-ios/fastlane/screenshots/en-US" ]]; then
+    warn "native-ios/fastlane/screenshots/en-US is missing; automated screenshot upload remains blocked"
   fi
 fi
 
 if [[ "$platform" == "android" || "$platform" == "both" ]]; then
-  echo ""
-  echo "Android readiness"
-  check_file "native-android/app/build.gradle.kts"
-  check_file "native-android/app/src/main/res/mipmap-anydpi/ic_launcher.xml"
-  check_file "native-android/app/src/main/res/mipmap-anydpi/ic_launcher_round.xml"
-  check_file "native-android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png"
-  check_nonempty "native-android/README.md"
+  if [[ -n "${SKIP_ANDROID_HEALTH:-}" ]]; then
+    warn "SKIP_ANDROID_HEALTH is set; skipping Android readiness checks"
+  else
+    echo ""
+    echo "Android readiness"
+    check_file "native-android/app/build.gradle.kts"
+    check_file "native-android/app/src/main/res/mipmap-anydpi/ic_launcher.xml"
+    check_file "native-android/app/src/main/res/mipmap-anydpi/ic_launcher_round.xml"
+    check_file "native-android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png"
+    check_nonempty "native-android/README.md"
 
-  if ! grep -q "Release signing" "$ROOT_DIR/native-android/README.md"; then
-    warn "native-android/README.md does not document release signing"
-  fi
+    if ! grep -q "Release signing" "$ROOT_DIR/native-android/README.md"; then
+      warn "native-android/README.md does not document release signing"
+    fi
 
-  if [[ ! -f "$ROOT_DIR/native-android/keystore.properties" ]]; then
-    warn "native-android/keystore.properties is not configured; signed Play uploads remain blocked"
-  fi
+    if [[ ! -f "$ROOT_DIR/native-android/keystore.properties" ]]; then
+      warn "native-android/keystore.properties is not configured; signed Play uploads remain blocked"
+    fi
 
-  if ! grep -q 'create("release")' "$ROOT_DIR/native-android/app/build.gradle.kts"; then
-    error "Android release signing config is missing from app/build.gradle.kts"
-  fi
+    if ! grep -q 'create("release")' "$ROOT_DIR/native-android/app/build.gradle.kts"; then
+      error "Android release signing config is missing from app/build.gradle.kts"
+    fi
 
-  if [[ ! -d "$ROOT_DIR/native-android/fastlane" ]]; then
-    warn "native-android/fastlane is not present yet; Play metadata automation is still blocked"
+    if [[ -d "$ROOT_DIR/native-android/fastlane" ]]; then
+      check_nonempty "native-android/fastlane/Fastfile"
+      check_nonempty "native-android/fastlane/Appfile"
+      check_nonempty "native-android/fastlane/metadata/android/en-US/title.txt"
+      check_nonempty "native-android/fastlane/metadata/android/en-US/short_description.txt"
+      check_nonempty "native-android/fastlane/metadata/android/en-US/full_description.txt"
+    else
+      warn "native-android/fastlane is not present yet; Play metadata automation is still blocked"
+    fi
+
+    if [[ ! -f "$ROOT_DIR/native-android/keystore.properties" ]]; then
+      warn "native-android/keystore.properties is not configured; Release signing is blocked"
+    fi
   fi
 fi
 

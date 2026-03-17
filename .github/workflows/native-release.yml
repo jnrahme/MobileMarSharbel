@@ -12,13 +12,21 @@ on:
           - ios
           - android
           - both
+      submit_review:
+        description: "For iOS only: submit the latest uploaded build for App Review"
+        type: choice
+        required: true
+        default: "false"
+        options:
+          - "false"
+          - "true"
       artifact_label:
         description: "Optional artifact label"
         required: false
         type: string
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: native-release-${{ github.ref_name }}-${{ inputs.platform || 'both' }}
@@ -26,24 +34,155 @@ concurrency:
 
 jobs:
   ios-artifacts:
-    name: iOS Artifacts
+    name: iOS Release
     if: ${{ inputs.platform == 'ios' || inputs.platform == 'both' }}
     runs-on: macos-15
     timeout-minutes: 45
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - uses: actions/checkout@v4
+
+      - name: Fail fast on required iOS release secrets
+        env:
+          APPSTORE_PRIVATE_KEY: ${{ secrets.APPSTORE_PRIVATE_KEY }}
+          APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+          APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+          APP_STORE_CONNECT_TEAM_ID: ${{ secrets.APP_STORE_CONNECT_TEAM_ID }}
+          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
+        run: |
+          set -euo pipefail
+          for name in APPSTORE_PRIVATE_KEY APPSTORE_KEY_ID APPSTORE_ISSUER_ID APP_STORE_CONNECT_TEAM_ID MATCH_GIT_URL MATCH_PASSWORD MATCH_GIT_BASIC_AUTHORIZATION; do
+            if [ -z "${!name:-}" ]; then
+              echo "Missing required secret: $name"
+              exit 1
+            fi
+          done
 
       - name: Make scripts executable
         run: chmod +x scripts/*.sh native-ios/scripts/healthcheck.sh
 
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install iOS Ruby gems
+        working-directory: native-ios
+        run: bundle install
+
+      - name: Prepare App Store Connect API key
+        env:
+          APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+          APPSTORE_PRIVATE_KEY: ${{ secrets.APPSTORE_PRIVATE_KEY }}
+        run: |
+          key_path="${RUNNER_TEMP}/AuthKey_${APPSTORE_KEY_ID}.p8"
+          printf '%s' "$APPSTORE_PRIVATE_KEY" > "$key_path"
+          chmod 600 "$key_path"
+          echo "APPSTORE_PRIVATE_KEY_PATH=$key_path" >> "$GITHUB_ENV"
+
       - name: Run iOS release preflight
         run: bash scripts/preflight-release.sh --platform ios --layer 1
+
+      - name: Verify App Store Connect API access
+        env:
+          APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+          APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+          APPSTORE_PRIVATE_KEY_PATH: ${{ env.APPSTORE_PRIVATE_KEY_PATH }}
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pyjwt==2.10.1 cryptography==44.0.1 requests==2.32.3
+          python scripts/check_store_access.py --platform ios --ios-bundle-id com.rammyinn.saintcharbel
+
+      - name: Select Xcode
+        run: |
+          set -euo pipefail
+          XCODE_PATH=""
+          while IFS= read -r candidate; do
+            if DEVELOPER_DIR="${candidate}/Contents/Developer" xcodebuild -version >/dev/null 2>&1; then
+              XCODE_PATH="${candidate}"
+              break
+            fi
+          done < <(ls -d /Applications/Xcode*.app 2>/dev/null | sort -V -r)
+
+          if [ -z "${XCODE_PATH}" ]; then
+            echo "No Xcode installation found."
+            exit 1
+          fi
+
+          echo "Using Xcode at: ${XCODE_PATH}"
+          sudo xcode-select -s "${XCODE_PATH}/Contents/Developer"
 
       - name: Show Xcode version
         run: xcodebuild -version
 
       - name: Run iOS release-readiness build
         run: SKIP_REMOTE_CHECKS=1 make verify-ios
+
+      - name: Configure git credentials for match
+        env:
+          MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
+        run: |
+          set -euo pipefail
+          decoded="$(printf '%s' "$MATCH_GIT_BASIC_AUTHORIZATION" | base64 --decode)"
+          git config --global url."https://${decoded}@github.com/".insteadOf "https://github.com/"
+
+      - name: Sync iOS signing assets
+        working-directory: native-ios
+        env:
+          APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+          APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+          APPSTORE_PRIVATE_KEY_PATH: ${{ env.APPSTORE_PRIVATE_KEY_PATH }}
+          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
+          APP_STORE_CONNECT_TEAM_ID: ${{ secrets.APP_STORE_CONNECT_TEAM_ID }}
+          APPLE_DEVELOPER_TEAM_ID: ${{ secrets.APP_STORE_CONNECT_TEAM_ID }}
+          APP_STORE_APP_IDENTIFIER: com.rammyinn.saintcharbel
+        run: bundle exec fastlane ios setup
+
+      - name: Upload iOS build to TestFlight
+        working-directory: native-ios
+        env:
+          APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+          APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+          APPSTORE_PRIVATE_KEY_PATH: ${{ env.APPSTORE_PRIVATE_KEY_PATH }}
+          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
+          APP_STORE_CONNECT_TEAM_ID: ${{ secrets.APP_STORE_CONNECT_TEAM_ID }}
+          APPLE_DEVELOPER_TEAM_ID: ${{ secrets.APP_STORE_CONNECT_TEAM_ID }}
+          APP_STORE_APP_IDENTIFIER: com.rammyinn.saintcharbel
+        run: bundle exec fastlane ios beta
+
+      - name: Upload iOS metadata
+        if: ${{ inputs.submit_review == 'true' }}
+        working-directory: native-ios
+        env:
+          APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+          APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+          APPSTORE_PRIVATE_KEY_PATH: ${{ env.APPSTORE_PRIVATE_KEY_PATH }}
+          APP_STORE_CONNECT_TEAM_ID: ${{ secrets.APP_STORE_CONNECT_TEAM_ID }}
+          APP_STORE_APP_IDENTIFIER: com.rammyinn.saintcharbel
+        run: bundle exec fastlane ios metadata
+
+      - name: Submit iOS build for review
+        if: ${{ inputs.submit_review == 'true' }}
+        working-directory: native-ios
+        env:
+          APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+          APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+          APPSTORE_PRIVATE_KEY_PATH: ${{ env.APPSTORE_PRIVATE_KEY_PATH }}
+          APP_STORE_CONNECT_TEAM_ID: ${{ secrets.APP_STORE_CONNECT_TEAM_ID }}
+          APP_STORE_APP_IDENTIFIER: com.rammyinn.saintcharbel
+        run: bundle exec fastlane ios submit_review
 
       - name: Resolve artifact label
         id: meta
@@ -54,20 +193,36 @@ jobs:
           label="${label//\//-}"
           echo "label=$label" >> "$GITHUB_OUTPUT"
 
-      - name: Zip iOS source snapshot
-        run: ditto -c -k --keepParent native-ios "native-ios-${{ steps.meta.outputs.label }}.zip"
-
-      - name: Upload iOS snapshot
+      - name: Upload iOS IPA
         uses: actions/upload-artifact@v4
         with:
-          name: ios-source-snapshot
-          path: native-ios-${{ steps.meta.outputs.label }}.zip
+          name: ios-ipa-${{ steps.meta.outputs.label }}
+          path: native-ios/build/SaintCharbelApp.ipa
+          if-no-files-found: error
+
+      - name: Upload iOS failure diagnostics
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-failure-diagnostics-${{ github.run_number }}
+          path: |
+            /Users/runner/Library/Logs/gym
+            native-ios/build/**/*.xcresult
+            native-ios/fastlane/report.xml
+          if-no-files-found: warn
 
   android-artifacts:
     name: Android Artifacts
     if: ${{ inputs.platform == 'android' || inputs.platform == 'both' }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+      GOOGLE_PLAY_JSON_KEY: ${{ secrets.GOOGLE_PLAY_JSON_KEY }}
     steps:
       - uses: actions/checkout@v4
 
@@ -91,6 +246,50 @@ jobs:
 
       - name: Run Android release-readiness build
         run: SKIP_REMOTE_CHECKS=1 make verify-android
+
+      - name: Setup Ruby for Android fastlane
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+          bundler-cache: true
+          working-directory: native-android
+
+      - name: Install Android Ruby gems
+        working-directory: native-android
+        run: bundle install
+
+      - name: Ensure Play service account secret
+        run: test -n "$GOOGLE_PLAY_JSON_KEY"
+
+      - name: Decode Play service account
+        run: printf '%s' "$GOOGLE_PLAY_JSON_KEY" > /tmp/play-service-account.json
+
+      - name: Generate keystore properties
+        run: |
+          {
+            echo "storeFile=keystore.jks"
+            echo "storePassword=$ANDROID_KEYSTORE_PASSWORD"
+            echo "keyAlias=$ANDROID_KEY_ALIAS"
+            echo "keyPassword=$ANDROID_KEY_PASSWORD"
+          } > native-android/keystore.properties
+
+      - name: Decode Android keystore
+        run: printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > native-android/keystore.jks
+
+      - name: Sync Android metadata
+        working-directory: native-android
+        run: bundle exec fastlane android metadata
+        env:
+          GOOGLE_PLAY_JSON_KEY: ${{ secrets.GOOGLE_PLAY_JSON_KEY }}
+
+      - name: Upload Android release
+        working-directory: native-android
+        run: bundle exec fastlane android release
+        env:
+          GOOGLE_PLAY_JSON_KEY: ${{ secrets.GOOGLE_PLAY_JSON_KEY }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
 
       - name: Upload Android debug APK
         uses: actions/upload-artifact@v4

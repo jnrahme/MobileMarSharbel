@@ -1,133 +1,224 @@
 default_platform(:ios)
 
 platform :ios do
+  def project_root
+    File.expand_path("..", __dir__)
+  end
+
   def app_identifier_value
-    "com.rammyinn.saintcharbel"
+    ENV.fetch("APP_STORE_APP_IDENTIFIER", "com.rammyinn.saintcharbel")
   end
 
   def xcodeproj_path
-    "SaintCharbelApp.xcodeproj"
+    File.join(project_root, "SaintCharbelApp.xcodeproj")
   end
 
-  def target_name
+  def scheme_name
     "SaintCharbelApp"
   end
 
   def marketing_version_value
-    get_version_number(
-      xcodeproj: xcodeproj_path,
-      target: target_name
-    )
+    get_version_number(xcodeproj: xcodeproj_path, target: scheme_name)
   end
 
-  def api_key_if_available
+  def app_store_connect_team_id
+    ENV["APP_STORE_CONNECT_TEAM_ID"] ||
+      ENV["FASTLANE_ITC_TEAM_ID"] ||
+      ENV["FASTLANE_TEAM_ID"]
+  end
+
+  def apple_developer_team_id
+    ENV["APPLE_DEVELOPER_TEAM_ID"] ||
+      ENV["IOS_DEVELOPMENT_TEAM"] ||
+      ENV["FASTLANE_TEAM_ID"] ||
+      app_store_connect_team_id
+  end
+
+  def asc_api_key
     return nil unless ENV["APPSTORE_KEY_ID"] && ENV["APPSTORE_ISSUER_ID"]
+
+    key_path = ENV["APPSTORE_PRIVATE_KEY_PATH"] ||
+               File.expand_path("~/.appstoreconnect/private_keys/AuthKey_#{ENV['APPSTORE_KEY_ID']}.p8")
+    return nil unless File.exist?(key_path)
 
     app_store_connect_api_key(
       key_id: ENV["APPSTORE_KEY_ID"],
       issuer_id: ENV["APPSTORE_ISSUER_ID"],
-      key_filepath: File.expand_path("~/.appstoreconnect/private_keys/AuthKey_#{ENV['APPSTORE_KEY_ID']}.p8")
+      key_filepath: key_path
     )
   end
 
-  def signing_team_value
-    ENV["IOS_DEVELOPMENT_TEAM"] || ENV["FASTLANE_TEAM_ID"]
-  end
-
-  def release_build_options
-    team = signing_team_value
-    xcargs_parts = ["-allowProvisioningUpdates"]
-    xcargs_parts << "DEVELOPMENT_TEAM=#{team}" if team && !team.empty?
-
-    options = {
-      scheme: target_name,
-      export_method: "app-store",
-      xcargs: xcargs_parts.join(" "),
-      output_directory: "build/release",
-      output_name: "SaintCharbelApp",
-      clean: true
-    }
-    options[:export_team_id] = team if team && !team.empty?
-    options
-  end
-
-  desc "Create a signed local release archive/IPA"
-  lane :release_build do
-    setup_ci if ENV["CI"] == "true"
-    build_app(release_build_options)
-  end
-
-  desc "Build and upload the current release to TestFlight"
-  lane :beta do
-    setup_ci if ENV["CI"] == "true"
-
-    api_key = api_key_if_available
-    version = marketing_version_value
+  def next_build_number(api_key)
     current_build_number = get_build_number(xcodeproj: xcodeproj_path).to_i
     next_build_number = current_build_number + 1
+    version = marketing_version_value
 
-    if api_key
-      begin
-        remote_build_number = latest_testflight_build_number(
-          api_key: api_key,
-          app_identifier: app_identifier_value,
-          version: version,
-          initial_build_number: current_build_number
-        ).to_i
-        next_build_number = [next_build_number, remote_build_number + 1].max
-      rescue => e
-        UI.important("Could not determine latest TestFlight build number: #{e}")
-      end
+    return next_build_number unless api_key
+
+    begin
+      remote_build_number = latest_testflight_build_number(
+        api_key: api_key,
+        app_identifier: app_identifier_value,
+        version: version,
+        initial_build_number: current_build_number
+      ).to_i
+      [next_build_number, remote_build_number + 1].max
+    rescue => error
+      UI.important("Could not read latest TestFlight build number: #{error}")
+      next_build_number
     end
+  end
 
-    UI.message("Using build number #{next_build_number} for version #{version}")
+  def install_match_signing(api_key:, readonly:)
+    return nil unless ENV["MATCH_GIT_URL"]
+
+    match_options = {
+      type: "appstore",
+      app_identifier: [app_identifier_value],
+      readonly: readonly,
+      api_key: api_key,
+      git_url: ENV["MATCH_GIT_URL"]
+    }
+
+    basic_auth = ENV["MATCH_GIT_BASIC_AUTHORIZATION"].to_s.strip
+    match_options[:git_basic_authorization] = basic_auth unless basic_auth.empty?
+
+    match(**match_options)
+
+    ENV["sigh_#{app_identifier_value}_appstore_profile-name"] ||
+      "match AppStore #{app_identifier_value}"
+  end
+
+  desc "Run the same iOS verification path used by root automation"
+  lane :verify do
+    sh("SKIP_REMOTE_CHECKS=${SKIP_REMOTE_CHECKS:-1} bash #{File.expand_path('../../scripts/verify-ios.sh', __dir__)}")
+  end
+
+  desc "Create or repair App Store certificates and provisioning profiles"
+  lane :setup do
+    setup_ci if ENV["CI"] == "true"
+
+    api_key = asc_api_key
+    if ENV["MATCH_GIT_URL"]
+      install_match_signing(api_key: api_key, readonly: false)
+    else
+      UI.message("No MATCH_GIT_URL configured. Falling back to Xcode automatic signing.")
+    end
+  end
+
+  desc "Build a signed archive for TestFlight/App Store delivery"
+  lane :build_release do
+    setup_ci if ENV["CI"] == "true"
+
+    api_key = asc_api_key
+    build_number = next_build_number(api_key)
+    version = marketing_version_value
+    UI.message("Using build number #{build_number} for version #{version}")
+
     increment_build_number(
       xcodeproj: xcodeproj_path,
-      build_number: next_build_number
+      build_number: build_number
     )
 
-    build_app(release_build_options)
+    team_id = apple_developer_team_id.to_s.strip
 
+    common_args = {
+      project: xcodeproj_path,
+      scheme: scheme_name,
+      configuration: "Release",
+      export_method: ENV.fetch("IOS_EXPORT_METHOD", "app-store"),
+      output_directory: File.join(project_root, "build"),
+      output_name: "SaintCharbelApp.ipa",
+      clean: true
+    }
+    common_args[:export_team_id] = team_id unless team_id.empty?
+
+    if ENV["MATCH_GIT_URL"]
+      profile_name = install_match_signing(api_key: api_key, readonly: true)
+
+      signing_args = {
+        path: xcodeproj_path,
+        use_automatic_signing: false,
+        targets: [scheme_name],
+        code_sign_identity: "Apple Distribution",
+        profile_name: profile_name
+      }
+      signing_args[:team_id] = team_id unless team_id.empty?
+      update_code_signing_settings(**signing_args)
+
+      build_args = common_args.merge(
+        export_options: {
+          signingStyle: "manual",
+          provisioningProfiles: {
+            app_identifier_value => profile_name
+          }
+        }
+      )
+      build_args[:xcargs] = "DEVELOPMENT_TEAM=#{team_id}" unless team_id.empty?
+      build_app(**build_args)
+    else
+      xcargs = "-allowProvisioningUpdates"
+      xcargs += " DEVELOPMENT_TEAM=#{team_id}" unless team_id.empty?
+
+      build_app(
+        **common_args,
+        xcargs: xcargs
+      )
+    end
+  end
+
+  desc "Backward-compatible alias for build_release"
+  lane :release_build do
+    build_release
+  end
+
+  desc "Upload the latest build to TestFlight after the archive succeeds"
+  lane :beta do
+    api_key = asc_api_key
+    build_release
     upload_to_testflight(
-      skip_waiting_for_build_processing: false,
+      skip_waiting_for_build_processing: ENV["CI"] == "true",
+      distribute_external: false,
       api_key: api_key
     )
   end
 
-  desc "Create the App Store Connect app record"
+  desc "Create the app in App Store Connect if it does not exist yet"
   lane :create_app do |options|
     produce(
       app_identifier: app_identifier_value,
-      app_name: "Saint Charbel Mobile",
+      app_name: options[:app_name] || "Saint Charbel",
       language: "en-US",
       app_version: options[:version] || marketing_version_value,
-      sku: "saintcharbel-ios",
-      team_id: ENV["FASTLANE_TEAM_ID"]
+      sku: options[:sku] || "saintcharbel001",
+      team_id: app_store_connect_team_id
     )
   end
 
-  desc "Upload localized metadata and screenshots"
+  desc "Upload App Store metadata and screenshots without binary upload"
   lane :metadata do |options|
-    api_key = api_key_if_available
+    api_key = asc_api_key
     version = options[:version] || marketing_version_value
+    skip_screenshots = options.key?(:skip_screenshots) ? options[:skip_screenshots] : false
 
     deliver(
       app_identifier: app_identifier_value,
       app_version: version,
+      force: true,
       skip_binary_upload: true,
-      skip_screenshots: false,
+      skip_screenshots: skip_screenshots,
       skip_metadata: false,
       overwrite_screenshots: true,
+      submit_for_review: false,
       run_precheck_before_submit: false,
       precheck_include_in_app_purchases: false,
-      force: true,
       api_key: api_key
     )
   end
 
-  desc "Submit the selected version for App Review"
+  desc "Submit the latest processed build for App Review"
   lane :submit_review do |options|
-    api_key = api_key_if_available
+    api_key = asc_api_key
     version = options[:version] || marketing_version_value
     build_number = options[:build_number]
 
@@ -138,13 +229,13 @@ platform :ios do
           app_identifier: app_identifier_value,
           version: version
         )
-      rescue => e
-        UI.user_error!("Could not determine latest TestFlight build number for v#{version}: #{e}")
+      rescue => error
+        UI.user_error!("Could not determine latest TestFlight build number for v#{version}: #{error}")
       end
     end
 
     if build_number.nil? || build_number.to_s.strip.empty?
-      UI.user_error!("Missing build number. Provide build_number:<N> or configure APPSTORE_* API key env vars.")
+      UI.user_error!("Missing build_number and unable to resolve the latest TestFlight build.")
     end
 
     UI.message("Submitting App Store version v#{version} with build #{build_number}")
@@ -158,9 +249,9 @@ platform :ios do
       skip_binary_upload: true,
       skip_screenshots: options.key?(:skip_screenshots) ? options[:skip_screenshots] : true,
       skip_metadata: options.key?(:skip_metadata) ? options[:skip_metadata] : true,
+      force: true,
       run_precheck_before_submit: false,
       precheck_include_in_app_purchases: false,
-      force: true,
       api_key: api_key,
       submission_information: {
         export_compliance_uses_encryption: false,

@@ -1,1 +1,1 @@
-Initial App Store release with the Saint Charbel storybook and guided Rosary experience.
+Initial App Store release of Saint Charbel with the storybook, guided Rosary flow, and core prayers.
