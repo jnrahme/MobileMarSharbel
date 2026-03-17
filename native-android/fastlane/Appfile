@@ -1,0 +1,1 @@
+package_name(ENV.fetch("ANDROID_APP_IDENTIFIER", "com.jnrahme.androidsaintcharbel"))

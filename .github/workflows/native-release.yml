@@ -200,13 +200,22 @@ jobs:
           path: native-ios/build/SaintCharbelApp.ipa
           if-no-files-found: error
 
+      - name: Collect iOS failure diagnostics
+        if: ${{ failure() }}
+        run: |
+          set -euo pipefail
+          mkdir -p native-ios/build/diagnostics
+          if [ -d "$HOME/Library/Logs/gym" ]; then
+            cp -R "$HOME/Library/Logs/gym" native-ios/build/diagnostics/gym
+          fi
+
       - name: Upload iOS failure diagnostics
         if: ${{ failure() }}
         uses: actions/upload-artifact@v4
         with:
           name: ios-failure-diagnostics-${{ github.run_number }}
           path: |
-            /Users/runner/Library/Logs/gym
+            native-ios/build/diagnostics
             native-ios/build/**/*.xcresult
             native-ios/fastlane/report.xml
           if-no-files-found: warn

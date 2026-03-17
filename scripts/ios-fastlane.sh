@@ -9,6 +9,15 @@ if [[ ! -d "$IOS_DIR" ]]; then
   exit 1
 fi
 
+# Prefer Homebrew Ruby over the macOS system Ruby so Bundler can satisfy the
+# repo lockfile on a fresh machine.
+for ruby_prefix in /opt/homebrew/opt/ruby /opt/homebrew/opt/ruby@3 /usr/local/opt/ruby /usr/local/opt/ruby@3; do
+  if [[ -x "$ruby_prefix/bin/ruby" ]]; then
+    export PATH="$ruby_prefix/bin:$PATH"
+    break
+  fi
+done
+
 if [[ -f "$IOS_DIR/Gemfile" ]] && command -v bundle >/dev/null 2>&1; then
   cd "$IOS_DIR"
   export BUNDLE_PATH="$IOS_DIR/vendor/bundle"

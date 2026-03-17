@@ -24,6 +24,7 @@ echo ""
 echo "1. Root markdown discipline"
 
 allowed_root_md=(
+  "AGENTS.md"
   "README.md"
 )
 
